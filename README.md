@@ -30,7 +30,7 @@ How far you press a key becomes how far the stick moves or the trigger pulls.</p
 
 > Windows may say "Windows protected your PC", because Depthpad isn't code-signed yet. Choose **More info → Run anyway**. Each release lists SHA-256 checksums so you can check your download.
 
-Requires Windows 10 or 11 (64-bit).
+Requires Windows 10 or 11 (64-bit). Depthpad checks for new versions at start-up and updates itself when you click **Update and restart** (you can turn the check off in Settings).
 
 ## Keyboards
 

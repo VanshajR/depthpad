@@ -41,8 +41,10 @@ certutil -hashfile src-tauri\redist\ViGEmBus_1.22.0_x64_x86_arm64.exe SHA256
 The SHA-256 must be `89220a7865076b342892f98865f3499fb7c4cfd673159e89d352c360fd014c6a`. Then:
 
 ```
-npx tauri build
+npx tauri build --config "{\"bundle\":{\"createUpdaterArtifacts\":false}}"
 ```
+
+Release installers are also signed for in-app updates, with a key only the release workflow has (`TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` secrets; the public key is in `tauri.conf.json`). The option above builds without that signature. Installers you build yourself work normally but can't update themselves.
 
 The installer is written to `target/release/bundle/nsis/`. The [release workflow](../.github/workflows/release.yml) does all of this when a `v*` tag is pushed and creates a draft release with the installer, a portable zip, the keyboard report tool and checksums.
 

@@ -1,4 +1,6 @@
 import { listen } from "@tauri-apps/api/event";
+import { relaunch } from "@tauri-apps/plugin-process";
+import { check, type Update } from "@tauri-apps/plugin-updater";
 // App-wide reactive state and actions. Components read `app.*` and call the actions.
 import { api, applyAppearance, type AppInfo, type KeyEntry, type Prefs, type Profile, type Snapshot, type Device, type Keyboards } from "./api";
 
@@ -21,6 +23,9 @@ class AppState {
   toasts = $state<Toast[]>([]);
   vigembus = $state(true);
   recording = $state(false);
+  /** A newer release, once found. */
+  update = $state<Update | null>(null);
+  updating = $state(false);
   /** Output history for the analysis charts: [t, lx, ly, rx, ry, lt, rt] */
   history: number[][] = [];
   historyTick = $state(0);
@@ -65,6 +70,7 @@ class AppState {
     if (this.prefs?.theme) applyAppearance(this.prefs.theme, this.prefs.accent);
     this.recording = await api.isRecording().catch(() => false);
     this.keyboards = await api.keyboards().catch(() => null);
+    if (this.prefs?.check_updates) this.checkForUpdate(false);
     listen<Keyboards>("keyboards", (e) => this.onKeyboards(e.payload));
     // a hotkey switched the profile
     listen<Profile>("profile-switched", (e) => {
@@ -92,6 +98,29 @@ class AppState {
       await this.onKeyboards(await api.useKeyboard(id, remember));
     } catch (e) {
       this.toast(String(e), { error: true });
+    }
+  }
+
+  /** Look for a newer release on GitHub. `manual`: say so when there is none (or it failed). */
+  async checkForUpdate(manual: boolean) {
+    try {
+      this.update = await check();
+      if (manual && !this.update) this.toast("Depthpad is up to date.");
+    } catch (e) {
+      if (manual) this.toast(`Couldn't check for updates: ${e}`, { error: true });
+    }
+  }
+
+  /** Download and run the signed installer, then restart into the new version. */
+  async installUpdate() {
+    if (!this.update || this.updating) return;
+    this.updating = true;
+    try {
+      await this.update.downloadAndInstall();
+      await relaunch();
+    } catch (e) {
+      this.updating = false;
+      this.toast(`The update failed: ${e}`, { error: true });
     }
   }
 

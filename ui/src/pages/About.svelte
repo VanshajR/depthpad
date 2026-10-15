@@ -19,6 +19,7 @@
         <span class="links">
           <button class="btn" onclick={() => openUrl(REPO)}>Source code</button>
           <button class="btn" onclick={() => openUrl(`${REPO}/issues`)}>Report a problem</button>
+          <button class="btn" onclick={() => app.checkForUpdate(true)}>Check for updates</button>
         </span></div>
     </div>
   </section>

@@ -71,6 +71,13 @@
     </div>
   </header>
 
+  {#if app.update}
+    <div class="banner update">
+      <Icon name="download" size={16} /><span>Depthpad {app.update.version} is available.</span>
+      <button class="btn quiet" onclick={() => openUrl(`https://github.com/VanshajR/depthpad/releases/tag/v${app.update?.version}`)}>What's new</button>
+      <button class="btn primary" disabled={app.updating} onclick={() => app.installUpdate()}>{app.updating ? "Updating…" : "Update and restart"}</button>
+    </div>
+  {/if}
   {#if !app.vigembus}
     <div class="banner error">
       <Icon name="info" size={16} /><span>The ViGEmBus driver isn't installed, so games can't see the controller. Install it, then restart Depthpad.</span>
@@ -142,6 +149,8 @@
   .banner span { flex: 1; }
   .banner.error { background: rgba(239, 83, 80, 0.08); border-color: rgba(239, 83, 80, 0.22); }
   .banner.error :global(svg) { color: var(--error); }
+  .banner.update { background: var(--accent-wash); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+  .banner.update :global(svg) { color: var(--accent); }
   .content { flex: 1; overflow-y: auto; padding: 20px; }
   .pagewrap { height: 100%; }
 </style>

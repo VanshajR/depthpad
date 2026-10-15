@@ -60,6 +60,10 @@ jobs:
 
       - name: Build
         run: npx tauri build
+        env:
+          # signs the installer for in-app updates (the public key is in tauri.conf.json)
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Package
         shell: pwsh
@@ -71,7 +75,19 @@ jobs:
           Copy-Item target/release/depthpad.exe, target/release/depthpad-probe.exe, LICENSE, THIRD_PARTY_NOTICES.md portable/Depthpad/
           Copy-Item -Recurse licenses portable/Depthpad/licenses
           Compress-Archive -Path portable/Depthpad -DestinationPath "out/Depthpad_${v}_x64-portable.zip"
-          Get-FileHash out/* -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } | Out-File -Encoding ascii out/SHA256SUMS.txt
+          # what the app's updater reads: the release's installer and its signature
+          $setup = "Depthpad_${v}_x64-setup.exe"
+          $sig = Get-Content -Raw "target/release/bundle/nsis/$setup.sig"
+          @{
+            version = $v
+            notes = "See https://github.com/VanshajR/depthpad/releases/tag/v$v"
+            pub_date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+            platforms = @{ "windows-x86_64" = @{ signature = $sig.Trim(); url = "https://github.com/VanshajR/depthpad/releases/download/v$v/$setup" } }
+          } | ConvertTo-Json -Depth 4 | Out-File -Encoding utf8NoBOM out/latest.json
+          # hash first, then write the list (writing into out/ while listing it would hash the list itself)
+          $sums = Get-ChildItem out -File | Get-FileHash -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" }
+          $sums | Out-File -Encoding ascii SHA256SUMS.txt
+          Move-Item SHA256SUMS.txt out/
           Get-Content out/SHA256SUMS.txt
 
       - uses: actions/upload-artifact@v4
