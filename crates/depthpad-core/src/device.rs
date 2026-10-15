@@ -16,6 +16,10 @@ use crate::keymap::{KeyInfo, Keymap};
 /// The bundled model definitions. Keep in sync with `data/devices/`.
 const BUNDLED: &[&str] = &[
     include_str!("../data/devices/ajazz-ak680-v2-he.json"),
+    include_str!("../data/devices/aula-mini60-he.json"),
+    include_str!("../data/devices/aula-mini60-he-pro.json"),
+    include_str!("../data/devices/aula-mini60-he-max.json"),
+    include_str!("../data/devices/ajazz-ak820-max-he.json"),
     include_str!("../data/devices/wooting.json"),
     include_str!("../data/devices/razer-huntsman-v2-analog.json"),
     include_str!("../data/devices/razer-huntsman-mini-analog.json"),
@@ -67,6 +71,28 @@ impl UsbMatch {
             && self.usage_page.is_none_or(|p| p == usage_page)
             && self.usage.is_none_or(|u| u == usage)
     }
+}
+
+/// Settings for keyboards on the Sonix driver (AJAZZ, AULA), from what their makers' software
+/// does. All optional.
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct SonixOptions {
+    /// Bytes requested with the device-info command (AJAZZ's Driveall reads 48, AULA's software 56).
+    #[serde(default)]
+    pub info_len: Option<u8>,
+    /// The maker code the device-info reply must carry (AULA: 0166).
+    #[serde(default, deserialize_with = "hex_opt")]
+    pub manufacturer: Option<u16>,
+    /// The product code the reply must carry, unless the USB product name contains
+    /// `product_name` (another keyboard shares the AULA MINI 60 HE PRO's USB IDs).
+    #[serde(default, deserialize_with = "hex_opt")]
+    pub product: Option<u16>,
+    #[serde(default)]
+    pub product_name: Option<String>,
+    /// How long a key's analog reading counts as current, ms (keyboards that stream every
+    /// pressed key need longer than the AK680's single-key stream).
+    #[serde(default)]
+    pub fresh_ms: Option<u32>,
 }
 
 /// How far support has been verified: `tested` on real hardware by a maintainer, `community`
@@ -165,6 +191,9 @@ pub struct Model {
     /// Something owners need to know (shown with the keyboard), e.g. software that must run.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,
+    /// Sonix driver settings.
+    #[serde(default, skip_serializing)]
+    pub sonix: SonixOptions,
 }
 
 fn keys<'de, D: Deserializer<'de>>(d: D) -> Result<Keymap, D::Error> {

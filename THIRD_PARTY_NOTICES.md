@@ -12,7 +12,8 @@ Parts of Depthpad are ported from HallJoy (https://github.com/PashOK7/HallJoy), 
 - the stick resolution logic (`crates/depthpad-core/src/sticks.rs`, from `configured_xusb_builder.cpp`);
 - the key-blocking rules (`crates/depthpad-core/src/routes.rs`, from `app.cpp` and `block_keys_policy.h`);
 - the key-assignment rules (`assigned_usage` in `crates/depthpad-core/src/protocols/sonix_ajazz.rs`, from `aula_mini60_native_model.h`);
-- the keyboard session handling: confirmed start and stop, clearing and reconnecting (`crates/depthpad-core/src/platform/drivers/sonix_ajazz.rs`, from `aula_mini60_diagnostic.cpp`).
+- the keyboard session handling: confirmed start and stop, clearing and reconnecting (`crates/depthpad-core/src/platform/drivers/sonix_ajazz.rs`, from `aula_mini60_diagnostic.cpp`);
+- the AULA MINI 60 HE (base, PRO, MAX) and AJAZZ AK820 MAX HE key maps, device-info lengths, identity checks and freshness window (`crates/depthpad-core/data/devices/aula-mini60-he*.json`, `ajazz-ak820-max-he.json`, `SonixOptions` in `device.rs`, from `aula_mini60_native_model.h`).
 
 ## ViGEmBus (bundled installer)
 

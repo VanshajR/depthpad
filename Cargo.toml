@@ -3,7 +3,7 @@ members = ["crates/depthpad-core", "crates/depthpad-probe", "src-tauri"]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "AGPL-3.0-only"
 repository = "https://github.com/VanshajR/depthpad"

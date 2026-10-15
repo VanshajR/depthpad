@@ -337,6 +337,9 @@ impl Engine {
             fusion: Mutex::new({
                 let mut f = Fusion::default();
                 f.unread_full = profile.settings.unread_depth == "full";
+                if let Some(ms) = model.sonix.fresh_ms {
+                    f.fresh = ms as f64 / 1000.0;
+                }
                 f
             }),
             mapper: Mutex::new(mapper),

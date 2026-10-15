@@ -1,9 +1,12 @@
-<!-- The controller as a product illustration: an Xbox-style silhouette with material shading and a
-     rim light; triggers and bumpers are physical parts behind the shoulders; sticks sit in recessed
-     wells and their caps move and glow; buttons light in their colours. Everything is live. -->
+<!-- The controller as a product illustration: a pad silhouette with material shading and a rim
+     light; triggers and bumpers are physical parts behind the shoulders; sticks sit in recessed
+     wells and their caps move and glow; buttons light in their colours. Everything is live.
+     Laid out as an Xbox controller, or as a DualShock 4 (d-pad and face buttons up top, both
+     sticks low in the middle, touchpad, PlayStation symbols) when that's the controller in use. -->
 <script lang="ts">
   import type { Report } from "./api";
-  import { BUTTON_BITS, FACE } from "./layout";
+  import { BUTTON_BITS, FACE, PS_FACE } from "./layout";
+  import { app } from "./state.svelte";
 
   let { out }: { out: Report } = $props();
   const on = (n: string) => (out.buttons & BUTTON_BITS[n]) !== 0;
@@ -20,7 +23,10 @@
   const BUMPER = (x: number, flip: number) =>
     `M${x - 120 * flip} 196 C${x - 100 * flip} 168 ${x - 40 * flip} 158 ${x + 10 * flip} 158 C${x + 60 * flip} 158 ${x + 100 * flip} 170 ${x + 118 * flip} 188`;
 
-  const LS = { x: 300, y: 330 }, RS = { x: 615, y: 440 }, DP = { x: 385, y: 440 }, FC = { x: 700, y: 330 };
+  const XBOX = { LS: { x: 300, y: 330 }, RS: { x: 615, y: 440 }, DP: { x: 385, y: 440 }, FC: { x: 700, y: 330 } };
+  const DS4 = { LS: { x: 405, y: 450 }, RS: { x: 595, y: 450 }, DP: { x: 290, y: 320 }, FC: { x: 710, y: 320 } };
+  let L = $derived(app.ps ? DS4 : XBOX);
+  let LS = $derived(L.LS), RS = $derived(L.RS), DP = $derived(L.DP), FC = $derived(L.FC);
   let lt = $derived(clamp(out.lt, 0, 1));
   let rt = $derived(clamp(out.rt, 0, 1));
 </script>
@@ -89,17 +95,28 @@
 
 </svg>
 <svg viewBox="50 100 900 570" aria-hidden="true">
-  <!-- guide, view, menu -->
-  <circle cx="500" cy="262" r="30" fill={on("GUIDE") ? "var(--accent)" : "#1a1b1f"} stroke="rgba(255,255,255,0.18)" stroke-width="2" />
-  <circle cx="500" cy="262" r="15" fill="none" stroke={on("GUIDE") ? "#fff" : "rgba(255,255,255,0.55)"} stroke-width="4" />
-  <g class="sys" class:lit={on("BACK")}>
-    <circle cx="438" cy="330" r="17" />
-    <rect x="427" y="321" width="14" height="11" rx="2" fill="none" /><rect x="434" y="327" width="14" height="11" rx="2" />
-  </g>
-  <g class="sys" class:lit={on("START")}>
-    <circle cx="562" cy="330" r="17" />
-    <path d="M553 324 H571 M553 330 H571 M553 336 H571" />
-  </g>
+  {#if app.ps}
+    <!-- touchpad (pressing it is the Guide/PS input here too), Share, Options, PS button -->
+    <rect x="395" y="212" width="210" height="104" rx="16" fill={on("GUIDE") ? "color-mix(in srgb, var(--accent) 35%, #1a1b1f)" : "#1a1b1f"}
+          stroke="rgba(255,255,255,0.16)" stroke-width="2" />
+    <rect x="395" y="212" width="210" height="6" rx="3" fill="var(--accent)" opacity="0.55" />
+    <g class="sys" class:lit={on("BACK")}><rect class="pill" x="352" y="236" width="18" height="36" rx="9" /></g>
+    <g class="sys" class:lit={on("START")}><rect class="pill" x="630" y="236" width="18" height="36" rx="9" /></g>
+    <circle cx="500" cy="474" r="19" fill={on("GUIDE") ? "var(--accent)" : "#1a1b1f"} stroke="rgba(255,255,255,0.18)" stroke-width="2" />
+    <text x="500" y="475" class="psb" fill={on("GUIDE") ? "#fff" : "rgba(255,255,255,0.6)"}>PS</text>
+  {:else}
+    <!-- guide, view, menu -->
+    <circle cx="500" cy="262" r="30" fill={on("GUIDE") ? "var(--accent)" : "#1a1b1f"} stroke="rgba(255,255,255,0.18)" stroke-width="2" />
+    <circle cx="500" cy="262" r="15" fill="none" stroke={on("GUIDE") ? "#fff" : "rgba(255,255,255,0.55)"} stroke-width="4" />
+    <g class="sys" class:lit={on("BACK")}>
+      <circle cx="438" cy="330" r="17" />
+      <rect x="427" y="321" width="14" height="11" rx="2" fill="none" /><rect x="434" y="327" width="14" height="11" rx="2" />
+    </g>
+    <g class="sys" class:lit={on("START")}>
+      <circle cx="562" cy="330" r="17" />
+      <path d="M553 324 H571 M553 330 H571 M553 336 H571" />
+    </g>
+  {/if}
 
   <!-- sticks: recessed wells, textured caps that move and glow -->
   {#each [{ c: LS, x: out.lx, y: out.ly, click: "LS" }, { c: RS, x: out.rx, y: out.ry, click: "RS" }] as st}
@@ -130,12 +147,21 @@
   {#each [["Y", 0, -1], ["A", 0, 1], ["X", -1, 0], ["B", 1, 0]] as [n, dx, dy]}
     {@const fx = FC.x + +dx * 54}
     {@const fy = FC.y + +dy * 54}
-    {@const col = FACE[n as string]}
+    {@const col = app.ps ? PS_FACE[n as string].color : FACE[n as string]}
     {@const p = on(n as string)}
     <circle cx={fx} cy={fy + 4} r="27" fill="rgba(0,0,0,0.55)" />
     <circle cx={fx} cy={fy} r="27" fill={p ? col : "#1d1e22"} stroke={p ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.12)"} stroke-width="1.5" />
     <path d="M{fx - 18} {fy - 12} A27 27 0 0 1 {fx + 18} {fy - 12}" stroke="rgba(255,255,255,0.18)" stroke-width="3" fill="none" stroke-linecap="round" />
-    <text x={fx} y={fy + 1} class="face" fill={p ? "#fff" : col}>{n}</text>
+    {#if app.ps}
+      {@const f = PS_FACE[n as string]}
+      {@const c = p ? "#fff" : f.color}
+      {#if f.symbol === "cross"}<path d="M{fx - 10} {fy - 10} L{fx + 10} {fy + 10} M{fx + 10} {fy - 10} L{fx - 10} {fy + 10}" stroke={c} stroke-width="4.5" stroke-linecap="round" />
+      {:else if f.symbol === "circle"}<circle cx={fx} cy={fy} r="11" fill="none" stroke={c} stroke-width="4.5" />
+      {:else if f.symbol === "square"}<rect x={fx - 10} y={fy - 10} width="20" height="20" fill="none" stroke={c} stroke-width="4.5" />
+      {:else}<path d="M{fx} {fy - 12} L{fx + 12} {fy + 9} H{fx - 12} Z" fill="none" stroke={c} stroke-width="4.5" stroke-linejoin="round" />{/if}
+    {:else}
+      <text x={fx} y={fy + 1} class="face" fill={p ? "#fff" : col}>{n}</text>
+    {/if}
   {/each}
 </svg>
 </div>
@@ -152,4 +178,7 @@
   .sys.lit circle { fill: var(--accent); stroke: var(--accent-ink); }
   .sys.lit rect, .sys.lit path { stroke: #fff; }
   .sys.lit rect:last-child { fill: var(--accent); }
+  .sys .pill { fill: #1a1b1f; stroke: rgba(255, 255, 255, 0.4); stroke-width: 2; }
+  .sys.lit .pill { fill: var(--accent); stroke: #fff; }
+  .psb { font-size: 13px; font-weight: 900; text-anchor: middle; }
 </style>

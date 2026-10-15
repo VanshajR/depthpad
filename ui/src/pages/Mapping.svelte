@@ -4,7 +4,7 @@
   import CurvePlot from "../lib/CurvePlot.svelte";
   import Icon from "../lib/Icon.svelte";
   import Keyboard3D from "../lib/Keyboard3D.svelte";
-  import { ANALOG, TARGET_LONG } from "../lib/layout";
+  import { ANALOG } from "../lib/layout";
   import Segmented from "../lib/Segmented.svelte";
   import SliderField from "../lib/SliderField.svelte";
   import { app } from "../lib/state.svelte";
@@ -50,7 +50,7 @@
     const saved = $state.snapshot(before) as Binding;
     app.edit((p) => (p.bindings = p.bindings.filter((b) => b.key !== key)));
     app.mapKey = pos;
-    app.toast(`${app.legend(pos)} no longer controls ${TARGET_LONG[saved.target]}.`, {
+    app.toast(`${app.legend(pos)} no longer controls ${app.targetName(saved.target)}.`, {
       action: { label: "Undo", run: () => app.edit((p) => { p.bindings = p.bindings.filter((b) => b.key !== key); p.bindings.push(saved); }) },
     });
   }
@@ -154,7 +154,7 @@
         <p class="card-sub">
           {#if selected === null}Click a key on the keyboard to map it.
           {:else if !canMap}Fn works inside the keyboard and can't be mapped.
-          {:else if target}{TARGET_LONG[target]}
+          {:else if target}{app.targetName(target)}
           {:else}Not mapped yet{/if}
         </p>
       </div>

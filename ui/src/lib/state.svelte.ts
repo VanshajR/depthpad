@@ -1,3 +1,4 @@
+import { PS_LONG, TARGET_LONG } from "./layout";
 import { listen } from "@tauri-apps/api/event";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check, type Update } from "@tauri-apps/plugin-updater";
@@ -33,6 +34,10 @@ class AppState {
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
   private toastId = 0;
 
+  /** The virtual controller is a PlayStation pad: draw and name inputs its way. */
+  ps = $derived(this.prefs?.controller === "ds4");
+  /** An input's name for the controller in use ("A button" or "Cross"). */
+  targetName = (t: string) => (this.ps ? PS_LONG[t] : undefined) ?? TARGET_LONG[t] ?? t;
   /** Full key travel of the keyboard, mm. */
   travel = $derived(this.device?.travel_mm ?? 3.4);
   private legends = $derived(new Map((this.device?.layout ?? []).map((k) => [k.pos, k.legend || "Space"])));

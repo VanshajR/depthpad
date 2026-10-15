@@ -61,10 +61,13 @@ fn user_error(msg: impl Into<String>) -> io::Error {
 impl Keyboard {
     pub fn open(model: &Model) -> io::Result<Self> {
         let api = hidapi::HidApi::new().map_err(|e| io::Error::other(e.to_string()))?;
-        let devices: Vec<(String, u16, u16)> = api
+        let devices: Vec<(String, u16, u16, String)> = api
             .device_list()
             .filter(|d| model.matches(d.vendor_id(), d.product_id(), d.usage_page(), d.usage()))
-            .map(|d| (d.path().to_string_lossy().into_owned(), d.vendor_id(), d.product_id()))
+            .map(|d| {
+                let name = d.product_string().unwrap_or("").to_string();
+                (d.path().to_string_lossy().into_owned(), d.vendor_id(), d.product_id(), name)
+            })
             .collect();
         let name = &model.name;
         match devices.len() {
@@ -72,7 +75,7 @@ impl Keyboard {
             1 => {}
             _ => return Err(user_error(format!("More than one {name} is connected. Connect only one."))),
         }
-        let (path, vid, pid) = &devices[0];
+        let (path, vid, pid, usb_name) = &devices[0];
         let lock = DeviceLock::acquire(&format!("Local\\Depthpad-{vid:04X}-{pid:04X}"))?;
         if !lock.1 {
             return Err(user_error("Another Depthpad window or command line is already using the keyboard."));
@@ -93,13 +96,25 @@ impl Keyboard {
             info: DeviceInfo { vid: 0, pid: 0, version: String::new(), manufacturer: 0, product: 0, rt_precision: 0 },
             _lock: lock,
         };
-        let reply = kb.command(protocol::GET_DEVICE_INFO, 48, 0, true, 0.4)?;
+        let opts = &model.sonix;
+        let reply = kb.command(protocol::GET_DEVICE_INFO, opts.info_len.unwrap_or(48), 0, true, 0.4)?;
         let info = reply
             .as_deref()
             .and_then(protocol::parse_device_info)
             .ok_or_else(|| user_error("The keyboard did not answer the device-info request."))?;
         if (info.vid, info.pid) != (kb.dev.vendor_id, kb.dev.product_id) {
             return Err(user_error(format!("Device-info reply does not match this device ({:04X}:{:04X}).", info.vid, info.pid)));
+        }
+        // keyboards from other makers can share USB IDs: check the maker and product the
+        // keyboard itself reports before sending it anything else (HallJoy's identity rule)
+        let named = opts.product_name.as_deref().is_some_and(|n| usb_name.to_uppercase().contains(&n.to_uppercase()));
+        if opts.manufacturer.is_some_and(|m| m != info.manufacturer)
+            || opts.product.is_some_and(|p| p != info.product && !named)
+        {
+            return Err(user_error(format!(
+                "This keyboard ({:04X}:{:04X}, maker {:04X}, product {:04X}) isn't a {name}; it shares its USB ID.",
+                info.vid, info.pid, info.manufacturer, info.product
+            )));
         }
         kb.info = info;
         Ok(kb)

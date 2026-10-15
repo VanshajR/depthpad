@@ -1,8 +1,9 @@
 <!-- Numeric readout beside the controller: sticks (values + a position pad), triggers, buttons. -->
 <script lang="ts">
+  import { app } from "./state.svelte";
   import type { Report } from "./api";
   import Glyph from "./Glyph.svelte";
-  import { BUTTON_BITS, TARGET_LONG } from "./layout";
+  import { BUTTON_BITS } from "./layout";
 
   let { out }: { out: Report } = $props();
   const c = (v: number, lo = -1, hi = 1) => Math.max(lo, Math.min(hi, v));
@@ -46,7 +47,7 @@
     <span class="name">Buttons</span>
     <div class="grid">
       {#each ORDER as b}
-        <span class="btn-cell" class:on={on(b)} title={TARGET_LONG[b]}><Glyph target={b} size={22} active={on(b)} /></span>
+        <span class="btn-cell" class:on={on(b)} title={app.targetName(b)}><Glyph target={b} size={22} active={on(b)} /></span>
       {/each}
     </div>
   </div>

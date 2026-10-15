@@ -2,7 +2,8 @@
      colours, bumpers and triggers as their shapes, stick directions as a cap with an arrow and an
      L/R tab, d-pad directions as a cross with the active arm lit. Drawn in a 100x100 box. -->
 <script lang="ts">
-  import { FACE } from "./layout";
+  import { FACE, PS_FACE, PS_SHORT } from "./layout";
+  import { app } from "./state.svelte";
   let { target, size = 24, active = false }: { target: string; size?: number; active?: boolean } = $props();
 
   const NEUTRAL = "#c9ced6";
@@ -23,15 +24,22 @@
 </script>
 
 <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
-  {#if kind === "face"}
+  {#if kind === "face" && app.ps}
+    {@const f = PS_FACE[target]}
+    <circle cx="50" cy="50" r="44" fill="#2a2d33" stroke={f.color} stroke-width="5" />
+    {#if f.symbol === "cross"}<path d="M33 33 L67 67 M67 33 L33 67" stroke={f.color} stroke-width="9" stroke-linecap="round" />
+    {:else if f.symbol === "circle"}<circle cx="50" cy="50" r="18" fill="none" stroke={f.color} stroke-width="8" />
+    {:else if f.symbol === "square"}<rect x="33" y="33" width="34" height="34" rx="2" fill="none" stroke={f.color} stroke-width="8" />
+    {:else}<path d="M50 30 L70 64 H30 Z" fill="none" stroke={f.color} stroke-width="8" stroke-linejoin="round" />{/if}
+  {:else if kind === "face"}
     <circle cx="50" cy="50" r="44" fill={FACE[target]} stroke="rgba(0,0,0,.28)" stroke-width="6" />
     <text x="50" y="51" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="50" font-weight="900">{target}</text>
   {:else if kind === "bumper"}
     <rect x="6" y="29" width="88" height="42" rx="21" fill={active ? ACCENT : FILL} stroke={NEUTRAL} stroke-width="5" />
-    <text x="50" y="51" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="30" font-weight="800">{target}</text>
+    <text x="50" y="51" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="30" font-weight="800">{app.ps ? PS_SHORT[target] : target}</text>
   {:else if kind === "trigger"}
     <path d="M20 94 L20 34 Q20 6 50 6 Q80 6 80 34 L80 94 Z" fill={active ? ACCENT : FILL} stroke={NEUTRAL} stroke-width="5" stroke-linejoin="round" />
-    <text x="50" y="66" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="30" font-weight="800">{target}</text>
+    <text x="50" y="66" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="30" font-weight="800">{app.ps ? PS_SHORT[target] : target}</text>
   {:else if kind === "stickdir"}
     <circle cx="50" cy="50" r="44" fill={FILL} stroke={NEUTRAL} stroke-width="5" />
     <circle cx="50" cy="50" r="30" fill={active ? ACCENT : "#4a5059"} />
@@ -51,7 +59,13 @@
     <rect x={50 + off[0] * 28 - 12} y={50 + off[1] * 28 - 12} width="24" height="24" rx="4" fill={active ? ACCENT : "#fff"} />
   {:else}
     <circle cx="50" cy="50" r="44" fill={active ? ACCENT : FILL} stroke={NEUTRAL} stroke-width="5" />
-    {#if target === "BACK"}
+    {#if app.ps && target === "BACK"}
+      <text x="50" y="52" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="21" font-weight="800">SHARE</text>
+    {:else if app.ps && target === "START"}
+      <text x="50" y="52" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="18" font-weight="800">OPTIONS</text>
+    {:else if app.ps && target === "GUIDE"}
+      <text x="50" y="52" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="34" font-weight="900">PS</text>
+    {:else if target === "BACK"}
       <rect x="28" y="30" width="30" height="26" rx="4" fill="none" stroke="#fff" stroke-width="6" />
       <rect x="42" y="44" width="30" height="26" rx="4" fill={active ? ACCENT : FILL} stroke="#fff" stroke-width="6" />
     {:else if target === "START"}

@@ -1,8 +1,9 @@
 <!-- Controller inputs as glyph chips: click to map the selected key, or drag onto any key. -->
 <script lang="ts">
+  import { app } from "./state.svelte";
   import { endDrag, startDrag } from "./dnd.svelte";
   import Glyph from "./Glyph.svelte";
-  import { TARGET_GROUPS, TARGET_LONG } from "./layout";
+  import { TARGET_GROUPS } from "./layout";
 
   let { value, hint = null, disabled = false, onchoose, onhover }:
     { value: string | null; hint?: string | null; disabled?: boolean; onchoose: (t: string | null) => void;
@@ -15,8 +16,8 @@
     <div class="chips">
       {#each targets as t}
         <button class="chip" class:on={value === t} class:hint={hint === t} class:dim={disabled}
-                title="{TARGET_LONG[t]} — click to map the selected key, or drag onto any key"
-                aria-label={TARGET_LONG[t]} aria-pressed={value === t} draggable="true"
+                title="{app.targetName(t)} — click to map the selected key, or drag onto any key"
+                aria-label={app.targetName(t)} aria-pressed={value === t} draggable="true"
                 onclick={() => !disabled && onchoose(t)}
                 onmouseenter={() => onhover?.(t)} onmouseleave={() => onhover?.(null)}
                 ondragstart={(e) => startDrag(e, t, null, e.currentTarget.querySelector("svg"))}

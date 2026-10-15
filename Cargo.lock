@@ -730,7 +730,7 @@ dependencies = [
 
 [[package]]
 name = "depthpad"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "depthpad-core",
  "parking_lot",
@@ -750,7 +750,7 @@ dependencies = [
 
 [[package]]
 name = "depthpad-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "hidapi",
  "parking_lot",
@@ -762,7 +762,7 @@ dependencies = [
 
 [[package]]
 name = "depthpad-probe"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "depthpad-core",
  "hidapi",

@@ -47,7 +47,7 @@
     </dd>
 
     <dt>Controller</dt>
-    <dd class="state {s?.pad ? 'ok' : 'error'}" title={s?.pad_error ?? ""}><i></i>{s?.pad ? `${s.pad_kind === "ds4" ? "DualShock 4" : "Xbox 360"}, connected` : s?.pad_parked ? "Unplugged while paused" : "Not connected"}</dd>
+    <dd class="state {s?.pad ? 'ok' : 'error'}" title={s?.pad_error ?? ""}><i></i>{s?.pad ? `${app.ps ? "DualShock 4" : "Xbox 360"}, connected` : s?.pad_parked ? "Unplugged while paused" : "Not connected"}</dd>
 
     <dt>Output</dt>
     <dd>{s?.paused ? "Paused" : "Live"}</dd>

@@ -2,7 +2,7 @@
 <script lang="ts">
   import { applyCurve, curveOf } from "./api";
   import Glyph from "./Glyph.svelte";
-  import { ANALOG, TARGET_LONG } from "./layout";
+  import { ANALOG } from "./layout";
   import { app } from "./state.svelte";
 
   const MAX_ROWS = 6;
@@ -41,7 +41,7 @@
             <span class="track"><span class="fill" class:held={r.held} style:width="{r.depth * 100}%"></span></span>
           </span>
           {#if r.target}
-            <span class="to" title={TARGET_LONG[r.target]}><Glyph target={r.target} size={18} active /><b class="tabular">{r.out}</b></span>
+            <span class="to" title={app.targetName(r.target)}><Glyph target={r.target} size={18} active /><b class="tabular">{r.out}</b></span>
           {:else}
             <span class="to none">—</span>
           {/if}

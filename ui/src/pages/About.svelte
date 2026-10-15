@@ -44,7 +44,7 @@
     </header>
     <div class="card rows">
       <dl>
-        <dt>HallJoy</dt><dd>Stick behaviour, key-blocking rules and keyboard session handling are ported from it. AGPL-3.0, PashOK7.</dd>
+        <dt>HallJoy</dt><dd>Stick behaviour, key-blocking rules, keyboard session handling and AULA / AK820 support are ported from it. AGPL-3.0, PashOK7.</dd>
         <dt>AnalogSense</dt><dd>Protocols for Wooting, Razer, NuPhy, DrunkDeer, Keychron, Lemokey, MadLions and Redragon boards are ported from its JavaScript SDK. MIT, Calamity, Inc.</dd>
         <dt>ViGEmBus</dt><dd>Virtual controller driver by Nefarius, used through the vigem-client crate. BSD-3-Clause / MIT.</dd>
         <dt>Tauri, Svelte</dt><dd>Application framework and interface. MIT / Apache-2.0.</dd>

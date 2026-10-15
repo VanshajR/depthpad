@@ -31,7 +31,7 @@
     <header class="card-head">
       <div>
         <h2 class="card-title">Controller output</h2>
-        <p class="card-sub">Virtual {app.snapshot?.pad_kind === "ds4" ? "DualShock 4" : "Xbox 360"} controller, as games receive it</p>
+        <p class="card-sub">Virtual {app.ps ? "PlayStation (DualShock 4)" : "Xbox 360"} controller, as games receive it</p>
       </div>
       <Segmented options={["Controller", "Analysis"]} bind:value={view} />
     </header>

@@ -83,7 +83,7 @@ mockIPC((cmd) => {
     case "prefs": return { profile: "Default", close_to_tray: true, start_minimized: false, check_updates: true,
                            pause_hotkey: "ControlRight+KeyP", next_profile_hotkey: "ControlRight+KeyO",
                            profile_hotkeys: { Racing: "ControlRight+Digit2" }, indicator: "both",
-                           controller: "xbox", unplug_when_paused: false, app_links: { "gta5.exe": "Racing" },
+                           controller: (q.get("pad") === "ds4" ? "ds4" : "xbox"), unplug_when_paused: false, app_links: { "gta5.exe": "Racing" },
                            theme: (q.get("theme") ?? "dark"), accent: (q.get("accent") ?? "#4c8dff") };
     case "vigembus_installed": return true;
     case "is_recording": return q.get("rec") === "1";

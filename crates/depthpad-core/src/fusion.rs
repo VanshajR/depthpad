@@ -65,11 +65,13 @@ pub struct Fusion {
     pub unread_full: bool,
     /// Per-key actuation points, 0.01 mm.
     actuation: HashMap<u8, f64>,
+    /// How long a streamed reading counts as current, s (FRESH unless the model says otherwise).
+    pub fresh: f64,
 }
 
 impl Default for Fusion {
     fn default() -> Self {
-        Self { keys: HashMap::new(), release: DEFAULT_RELEASE, focus: None, unread_full: true, actuation: HashMap::new() }
+        Self { keys: HashMap::new(), release: DEFAULT_RELEASE, focus: None, unread_full: true, actuation: HashMap::new(), fresh: FRESH }
     }
 }
 
@@ -117,7 +119,7 @@ impl Fusion {
         let k = self.keys.get_mut(&pos).expect("inserted above");
         k.ramp_from = if k.travel > 0.0 { point.min(k.travel) } else { point.min(guess) };
         k.ramp_time = now;
-        if now - k.stream_time > FRESH {
+        if now - k.stream_time > self.fresh {
             k.travel = 0.0;
         }
     }
@@ -146,7 +148,7 @@ impl Fusion {
         let full = k.stroke as f64 * 10.0;
         let ramp = (!k.down && now - k.ramp_time < RELEASE_RAMP)
             .then(|| k.ramp_from * (1.0 - (now - k.ramp_time) / RELEASE_RAMP));
-        let travel = if now - k.stream_time <= FRESH {
+        let travel = if now - k.stream_time <= self.fresh {
             // after a key-up the key is at most at its release point, even if the stream's last
             // (possibly stale) packet for it says deeper
             ramp.map_or(k.travel, |r| k.travel.min(r))
@@ -160,7 +162,7 @@ impl Fusion {
 
     pub fn source(&self, pos: u8, now: f64) -> Option<Source> {
         let k = self.keys.get(&pos)?;
-        if now - k.stream_time <= FRESH {
+        if now - k.stream_time <= self.fresh {
             Some(Source::Stream)
         } else if k.down {
             Some(Source::Held)

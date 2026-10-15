@@ -37,6 +37,8 @@ Requires Windows 10 or 11 (64-bit). Depthpad checks for new versions at start-up
 | Keyboard | Status |
 |---|---|
 | AJAZZ AK680 V2 HE (`0C45:80BC`) | **Tested** |
+| AULA MINI 60 HE, HE PRO, HE MAX | Untested |
+| AJAZZ AK820 MAX HE | Untested |
 | Wooting (any board) | Untested |
 | Razer Huntsman V2 Analog, Mini Analog, V3 Pro, V3 Pro TKL, V3 Pro Mini (Razer Synapse must be running) | Untested |
 | NuPhy HE boards | Untested |
@@ -45,7 +47,7 @@ Requires Windows 10 or 11 (64-bit). Depthpad checks for new versions at start-up
 | MadLions MAD60HE, MAD68HE, MAD68R | Untested |
 | Redragon K709 HE | Untested |
 
-**Untested** means the support is written from [AnalogSense](https://github.com/AnalogSense/JavaScript-SDK)'s working code, but nobody has tried it with Depthpad yet. If you own one, please try it and [tell us how it went](https://github.com/VanshajR/depthpad/issues/new?template=keyboard-support.yml).
+**Untested** means the support is written from working code in [HallJoy](https://github.com/PashOK7/HallJoy) (AULA, AK820) or [AnalogSense](https://github.com/AnalogSense/JavaScript-SDK) (the rest), but nobody has tried it with Depthpad yet. If you own one, please try it and [tell us how it went](https://github.com/VanshajR/depthpad/issues/new?template=keyboard-support.yml).
 
 **Your keyboard isn't listed?** Open Depthpad → Settings → Keyboard → **Create report** (or run `depthpad-probe.exe` from the release). It records what your keyboard sends during a few guided key presses, without changing anything on it, and saves a file to attach to a [keyboard support request](https://github.com/VanshajR/depthpad/issues/new?template=keyboard-support.yml). See [docs/KEYBOARD_REPORTS.md](docs/KEYBOARD_REPORTS.md).
 
@@ -69,7 +71,7 @@ Contributions are welcome, especially support for more keyboards. Start with [CO
 
 ## Credits
 
-- [HallJoy](https://github.com/PashOK7/HallJoy) by PashOK7: stick behaviour, key-blocking rules and keyboard session handling (AGPL-3.0).
+- [HallJoy](https://github.com/PashOK7/HallJoy) by PashOK7: stick behaviour, key-blocking rules, keyboard session handling, and the AULA MINI 60 HE and AJAZZ AK820 MAX HE key maps and identity checks (AGPL-3.0).
 - [AnalogSense](https://github.com/AnalogSense/JavaScript-SDK) by Calamity, Inc.: analog protocols for Wooting, Razer, NuPhy, DrunkDeer, Keychron, Lemokey, MadLions and Redragon boards (MIT).
 - [ViGEmBus](https://github.com/nefarius/ViGEmBus) by Nefarius Software Solutions: the virtual controller driver.
 
