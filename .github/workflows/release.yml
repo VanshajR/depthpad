@@ -1,0 +1,87 @@
+name: Release
+
+# Push a tag like v0.2.0 (matching the version in Cargo.toml, package.json and tauri.conf.json)
+# to build the installer, portable zip and keyboard report tool, and create a draft release.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  VIGEMBUS: ViGEmBus_1.22.0_x64_x86_arm64.exe
+  VIGEMBUS_SHA256: 89220a7865076b342892f98865f3499fb7c4cfd673159e89d352c360fd014c6a
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Version
+        id: v
+        shell: bash
+        run: |
+          V=$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)
+          grep -q "\"version\": \"$V\"" src-tauri/tauri.conf.json || { echo "tauri.conf.json version differs from Cargo.toml ($V)"; exit 1; }
+          grep -q "\"version\": \"$V\"" package.json || { echo "package.json version differs from Cargo.toml ($V)"; exit 1; }
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "${GITHUB_REF_NAME#v}" != "$V" ]; then echo "tag $GITHUB_REF_NAME doesn't match version $V"; exit 1; fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
+      - name: Install
+        run: npm ci
+
+      - name: ViGEmBus installer (downloaded and checked, not committed)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force src-tauri/redist | Out-Null
+          Invoke-WebRequest "https://github.com/nefarius/ViGEmBus/releases/download/v1.22.0/$env:VIGEMBUS" -OutFile "src-tauri/redist/$env:VIGEMBUS"
+          $h = (Get-FileHash "src-tauri/redist/$env:VIGEMBUS" -Algorithm SHA256).Hash.ToLower()
+          if ($h -ne $env:VIGEMBUS_SHA256) { throw "ViGEmBus installer checksum mismatch: $h" }
+
+      - name: Tests
+        run: |
+          npm run check
+          npm run build
+          cargo build --release --locked -p depthpad-probe
+          cargo test --workspace --locked
+
+      - name: Build
+        run: npx tauri build
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $v = "${{ steps.v.outputs.version }}"
+          New-Item -ItemType Directory -Force out, portable/Depthpad | Out-Null
+          Copy-Item target/release/bundle/nsis/*.exe out/
+          Copy-Item target/release/depthpad-probe.exe "out/depthpad-probe-$v.exe"
+          Copy-Item target/release/depthpad.exe, target/release/depthpad-probe.exe, LICENSE, THIRD_PARTY_NOTICES.md portable/Depthpad/
+          Copy-Item -Recurse licenses portable/Depthpad/licenses
+          Compress-Archive -Path portable/Depthpad -DestinationPath "out/Depthpad_${v}_x64-portable.zip"
+          Get-FileHash out/* -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } | Out-File -Encoding ascii out/SHA256SUMS.txt
+          Get-Content out/SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: depthpad-${{ steps.v.outputs.version }}
+          path: out/*
+
+      - name: Draft release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: out/*

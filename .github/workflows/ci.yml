@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install
+        run: npm ci
+
+      - name: UI check and build
+        run: |
+          npm run check
+          npm run build
+
+      # the app bundles the report tool and the ViGEmBus installer; tests only need them to exist
+      - name: Bundled files
+        shell: pwsh
+        run: |
+          cargo build --release --locked -p depthpad-probe
+          New-Item -ItemType Directory -Force src-tauri/redist | Out-Null
+          New-Item -ItemType File -Force src-tauri/redist/ViGEmBus_1.22.0_x64_x86_arm64.exe | Out-Null
+
+      - name: Rust tests
+        run: cargo test --workspace --locked

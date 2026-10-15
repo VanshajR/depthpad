@@ -1,0 +1,48 @@
+name: Keyboard support request
+description: Ask for a keyboard to be supported, or tell us how an untested one worked.
+title: "Keyboard: "
+labels: ["keyboard support"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! For a keyboard Depthpad doesn't list yet, a **keyboard report** is the most useful thing you can attach: Depthpad → Settings → Keyboard → **Create report**, or run `depthpad-probe.exe` from the latest release. See [docs/KEYBOARD_REPORTS.md](https://github.com/VanshajR/depthpad/blob/main/docs/KEYBOARD_REPORTS.md).
+  - type: input
+    id: keyboard
+    attributes:
+      label: Keyboard
+      description: Brand and model, as printed on the box.
+      placeholder: e.g. NuPhy Halo75 HE
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is this about?
+      options:
+        - It isn't supported; please add it
+        - It's listed as Untested and it works
+        - It's listed as Untested and it doesn't work
+        - It's supported but something's wrong
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Keyboard report
+      description: Drag the `depthpad-report-....json` file here. It contains your keyboard's USB details and what it sent during the guided steps, nothing else.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: For an untested keyboard, does it connect (Settings → Keyboard)? Do keys light up gradually on the Live page?
+  - type: input
+    id: software
+    attributes:
+      label: The keyboard's own software
+      description: Name or web address of the app the maker provides for it, if any.
+  - type: input
+    id: version
+    attributes:
+      label: Depthpad version
+      description: About page. Leave empty if you only ran the report tool.

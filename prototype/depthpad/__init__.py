@@ -1,0 +1,5 @@
+"""Depthpad: analog gamepad for the AJAZZ AK680 V2 HE."""
+APP_NAME = "Depthpad"
+APP_ID = "Depthpad"
+VERSION = "0.1.0"
+REPO = "VanshajR/depthpad"

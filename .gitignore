@@ -1,0 +1,31 @@
+# Build output
+/target/
+/ui/dist/
+/node_modules/
+/src-tauri/gen/
+
+# Redistributables are downloaded and checked at build time (see docs/BUILDING.md), not committed
+/src-tauri/redist/*.exe
+/prototype/build/redist/
+/prototype/ak680/vendor/*.dll
+
+# Python prototype environments and builds
+.venv/
+__pycache__/
+*.pyc
+/dist/
+/prototype/build/work/
+/prototype/build/assets/
+*.spec.bak
+
+# Session recordings contain every key pressed: never commit them (the test capture is reviewed)
+*.log
+!crates/depthpad-core/tests/data/capture_chords.log
+depthpad-report-*.json
+
+# Editors and OS
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+.DS_Store

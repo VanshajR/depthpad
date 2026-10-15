@@ -1,0 +1,20 @@
+[package]
+name = "depthpad-probe"
+description = "Creates a keyboard report: what Depthpad needs to know to support a Hall-effect keyboard"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "depthpad-probe"
+path = "src/main.rs"
+
+[dependencies]
+depthpad-core = { path = "../depthpad-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+parking_lot = "0.12"
+
+[target.'cfg(windows)'.dependencies]
+hidapi = { version = "2.6", default-features = false, features = ["windows-native"] }

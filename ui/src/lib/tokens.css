@@ -1,0 +1,146 @@
+/* Depthpad design system (see docs/DESIGN.md).
+   Neutral charcoal surfaces separated by tone; hairline borders only on raised panels;
+   one accent (blue) for selection and measured depth; amber only for "held"; status colours
+   only for status; 8 px grid, 12 px panel radius, 36 px controls. */
+:root {
+  color-scheme: dark;
+  --bg: #0f1012;
+  --rail: #131417;
+  --surface: #17181b;
+  --raised: #1f2024;
+  --hover: #2a2c31;
+  --pressed: #323232;
+  --stroke: #2c2e33;
+  --stroke-soft: #222428;
+  --key: #262626;
+
+  --ink: #f2f2f2;
+  --ink-2: #a6a6a6;
+  --ink-3: #6e6e6e;
+
+  /* the accent is chosen in Settings (set on <html> as --accent); the rest derive from it */
+  --accent: #4c8dff;
+  --accent-hover: color-mix(in srgb, var(--accent) 85%, white);
+  --accent-ink: color-mix(in srgb, var(--accent) 62%, white);
+  --accent-wash: color-mix(in srgb, var(--accent) 14%, transparent);
+  --held: #f0a33a;
+  --ok: #2fbf71;
+  --warn: #f0a33a;
+  --error: #ef5350;
+
+  --series-1: #3987e5; /* dataviz reference palette, dark steps, validated on --surface */
+  --series-2: #d95926;
+
+  --radius-panel: 12px;
+  --radius-control: 8px;
+  --control-h: 36px;
+
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --fs-title: 22px;
+  --fs-heading: 15px;
+  --fs-body: 13px;
+  --fs-label: 12.5px;
+  --fs-caption: 12px;
+  --fs-overline: 10.5px;
+
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Themes: the same roles, other surfaces. The keyboard and controller drawings are hardware and
+   stay dark in every theme. */
+:root[data-theme="midnight"] {
+  --bg: #0b0e14;
+  --rail: #0e121a;
+  --surface: #121722;
+  --raised: #182030;
+  --hover: #1f293b;
+  --pressed: #273347;
+  --stroke: #253045;
+  --stroke-soft: #1b2434;
+  --key: #1d2536;
+  --ink: #eef2f8;
+  --ink-2: #9ba7b9;
+  --ink-3: #66728a;
+}
+:root[data-theme="oled"] {
+  --bg: #000000;
+  --rail: #050505;
+  --surface: #0b0b0c;
+  --raised: #141416;
+  --hover: #1d1d20;
+  --pressed: #26262a;
+  --stroke: #232326;
+  --stroke-soft: #161618;
+  --key: #18181b;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3f4f6;
+  --rail: #ffffff;
+  --surface: #ffffff;
+  --raised: #f1f2f5;
+  --hover: #e7e9ed;
+  --pressed: #dcdfe4;
+  --stroke: #d3d7de;
+  --stroke-soft: #e4e7ec;
+  --key: #e8eaee;
+  --ink: #15181d;
+  --ink-2: #4a515c;
+  --ink-3: #7a828e;
+  --accent-ink: color-mix(in srgb, var(--accent) 80%, black);
+  --accent-wash: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 var(--fs-body) / 1.45 var(--font);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  overflow: hidden;
+}
+#app { height: 100%; }
+button { font: inherit; color: inherit; }
+input { font: inherit; }
+
+.tabular { font-variant-numeric: tabular-nums; }
+.overline { color: var(--ink-3); font-size: var(--fs-overline); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.secondary { color: var(--ink-2); }
+.tertiary { color: var(--ink-3); font-size: var(--fs-caption); }
+
+.panel { background: var(--surface); border: 1px solid var(--stroke-soft); border-radius: var(--radius-panel); }
+
+.btn {
+  height: var(--control-h); padding: 0 14px; border-radius: var(--radius-control);
+  background: var(--raised); border: 1px solid var(--stroke); cursor: pointer;
+  transition: background 120ms var(--ease), border-color 120ms var(--ease);
+}
+.btn:hover { background: var(--hover); }
+.btn:active { background: var(--pressed); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn.quiet { background: transparent; border-color: transparent; color: var(--ink-2); }
+.btn.quiet:hover { background: var(--raised); color: var(--ink); }
+.btn.danger { background: transparent; border-color: transparent; color: var(--error); }
+.btn.danger:hover { background: rgba(239, 83, 80, 0.12); }
+.btn:focus-visible, .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--pressed); border-radius: 5px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: #3d3d3d; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Card: the one surface used on every page. Solid, hairline-bordered, small radius. */
+.card { border-radius: 10px; background: var(--surface); border: 1px solid var(--stroke-soft); }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.card-title { margin: 0; font: 600 14px/1.3 var(--font); }
+.card-sub { margin: 2px 0 0; color: var(--ink-3); font-size: var(--fs-caption); }
+
+/* Page header for pages that need one. */
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin: 0 0 16px; }
+.page-title { margin: 0; font: 600 20px/1.2 var(--font-display); letter-spacing: -0.01em; }
+.page-sub { margin: 4px 0 0; color: var(--ink-2); }

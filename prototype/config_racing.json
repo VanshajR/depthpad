@@ -1,0 +1,36 @@
+{
+  "deadzone_mm": 0.2,
+  "full_mm": 2.6,
+  "button_mm": 1.0,
+  "stick_shape": "square",
+  "last_key_priority": false,
+  "last_key_priority_sensitivity": 0.02,
+  "snappy_joystick": false,
+  "block_keys": true,
+  "block_allow_alt_tab": true,
+  "pause_hotkey": "ControlRight+KeyP",
+  "left_stick": {
+    "up": "KeyI",
+    "down": "KeyK",
+    "left": "KeyA",
+    "right": "KeyD"
+  },
+  "right_stick": {
+    "up": "ArrowUp",
+    "down": "ArrowDown",
+    "left": "ArrowLeft",
+    "right": "ArrowRight"
+  },
+  "left_trigger": "KeyS",
+  "right_trigger": "KeyW",
+  "buttons": {
+    "A": "Space",
+    "B": "KeyC",
+    "X": "KeyR",
+    "Y": "KeyG",
+    "LB": "KeyQ",
+    "RB": "KeyE",
+    "BACK": "Tab",
+    "START": "Enter"
+  }
+}
