@@ -345,6 +345,7 @@ impl Engine {
             fusion: Mutex::new({
                 let mut f = Fusion::default();
                 f.unread_full = profile.settings.unread_depth == "full";
+                f.measured_only = profile.settings.unread_depth == "measured";
                 if let Some(ms) = model.sonix.fresh_ms {
                     f.fresh = ms as f64 / 1000.0;
                 }
@@ -460,7 +461,11 @@ impl Engine {
 
     pub fn set_profile(&self, profile: Profile) {
         *self.inner.mapper.lock() = Mapper::new(&profile, self.inner.model);
-        self.inner.fusion.lock().unread_full = profile.settings.unread_depth == "full";
+        {
+            let mut f = self.inner.fusion.lock();
+            f.unread_full = profile.settings.unread_depth == "full";
+            f.measured_only = profile.settings.unread_depth == "measured";
+        }
         *self.inner.profile.lock() = profile;
         self.inner.update_blocker();
     }

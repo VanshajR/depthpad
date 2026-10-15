@@ -166,7 +166,8 @@ pub struct Settings {
     pub block_all_keys: bool,
     pub pause_hotkey: String,
     /// Depth assumed for a key the keyboard says is down but sends no analog data for (with
-    /// another key held still, the AK680 only streams that one): "actuation" or "full".
+    /// another key held still, the AK680 only streams that one): "actuation", "full", or
+    /// "measured" (no estimate: such keys have no depth, and none is held or faded either).
     pub unread_depth: String,
     /// Where diagonals point, degrees from horizontal: 45 is even; higher leans toward up/down.
     pub diagonal_angle: f64,

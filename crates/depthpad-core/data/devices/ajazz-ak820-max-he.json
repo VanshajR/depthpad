@@ -1,6 +1,6 @@
 {
   "id": "ajazz-ak820-max-he",
-  "name": "AJAZZ AK820 MAX HE",
+  "name": "AJAZZ AK820 MAX HE (Sonix revision, 0C45:80B1)",
   "vendor": "AJAZZ",
   "driver": "sonix-ajazz",
   "status": "untested",
@@ -14,7 +14,7 @@
   ],
   "travel_mm": 3.4,
   "width_units": 16,
-  "note": "Same chip and protocol as the AK680 V2 HE, so the same one-key-at-a-time limit is likely.",
+  "note": "This revision has the AK680 V2 HE's chip and firmware: only the last key that moved streams its depth, so other held keys are estimated. HallJoy does not support it. The wired RGB revision (0416:7372) is a different keyboard.",
   "sonix": {
     "info_len": 48
   },

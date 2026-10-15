@@ -13,6 +13,9 @@
 //!   (learned from streamed keys, whose key-up arrives at a consistent depth): start there and
 //!   ease to 0 over `RELEASE_RAMP` rather than jump;
 //! * otherwise released.
+//!
+//! With `measured_only`, none of the estimates: a key has depth only while the stream reports it
+//! (for players who want every value to be real, even if held keys then read 0).
 
 use std::collections::HashMap;
 
@@ -63,6 +66,8 @@ pub struct Fusion {
     pub focus: Option<u8>,
     /// Unread keys count as fully pressed (the old behaviour) instead of at their actuation point.
     pub unread_full: bool,
+    /// Only streamed depth counts: no estimates for keys the stream isn't reporting.
+    pub measured_only: bool,
     /// Per-key actuation points, 0.01 mm.
     actuation: HashMap<u8, f64>,
     /// How long a streamed reading counts as current, s (FRESH unless the model says otherwise).
@@ -71,7 +76,7 @@ pub struct Fusion {
 
 impl Default for Fusion {
     fn default() -> Self {
-        Self { keys: HashMap::new(), release: DEFAULT_RELEASE, focus: None, unread_full: true, actuation: HashMap::new(), fresh: FRESH }
+        Self { keys: HashMap::new(), release: DEFAULT_RELEASE, focus: None, unread_full: true, measured_only: false, actuation: HashMap::new(), fresh: FRESH }
     }
 }
 
@@ -148,6 +153,10 @@ impl Fusion {
         let full = k.stroke as f64 * 10.0;
         let ramp = (!k.down && now - k.ramp_time < RELEASE_RAMP)
             .then(|| k.ramp_from * (1.0 - (now - k.ramp_time) / RELEASE_RAMP));
+        if self.measured_only {
+            let fresh = now - k.stream_time <= self.fresh;
+            return if fresh { (k.travel / full).min(1.0) } else { 0.0 };
+        }
         let travel = if now - k.stream_time <= self.fresh {
             // after a key-up the key is at most at its release point, even if the stream's last
             // (possibly stale) packet for it says deeper
@@ -164,6 +173,8 @@ impl Fusion {
         let k = self.keys.get(&pos)?;
         if now - k.stream_time <= self.fresh {
             Some(Source::Stream)
+        } else if self.measured_only {
+            None
         } else if k.down {
             Some(Source::Held)
         } else if now - k.ramp_time < RELEASE_RAMP {
@@ -204,5 +215,22 @@ mod tests {
         // the old behaviour on request
         f.unread_full = true;
         assert_eq!(f.depth(52, 2.0), 1.0);
+    }
+
+    #[test]
+    fn measured_only() {
+        let (w, d) = (34u8, 51u8);
+        let mut f = Fusion { measured_only: true, ..Fusion::default() };
+        f.on_stream(w, 170, 34, 0.0);
+        f.on_digital(w, true, 0.0);
+        assert_eq!(f.depth(w, 0.01), 0.5);
+        // D down without data: nothing; W after the stream left it: nothing, not its last depth
+        f.on_digital(d, true, 0.5);
+        assert_eq!((f.depth(d, 0.5), f.source(d, 0.5)), (0.0, None));
+        assert_eq!(f.depth(w, 0.5), 0.0);
+        // no fade after a key-up either
+        f.on_stream(d, 100, 34, 1.0);
+        f.on_digital(d, false, 1.05);
+        assert_eq!(f.depth(d, 1.06), 0.0);
     }
 }

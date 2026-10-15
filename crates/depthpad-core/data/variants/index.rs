@@ -11,6 +11,7 @@ pub const INDEX: &[(&str, &str, &[&str])] = &[
     ("redragon-k686-he-uk", "aula-win-he", &["7431UKHEXYXBJCARGB"]),
     ("redragon-k617-he", "aula-win-he", &["7153USHEXYXCPARGB", "7153BRHEXYXCPARGB"]),
     ("irok-na87", "aula-win-he", &["GK8260HERGB"]),
+    ("ajazz-ak820-max-he-rgb", "aula-win-he", &["SG8994HERGB"]),
     ("gamakay-tk75-tmr-ry1b-3590", "rongyuan-he", &["RY1B-3590"]),
     ("gamakay-tk75-tmr-ry1b-3591", "rongyuan-he", &["RY1B-3591"]),
     ("womier-sk75-tmr-ry1b-2518", "rongyuan-he", &["RY1B-2518"]),

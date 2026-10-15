@@ -62,7 +62,7 @@ export interface Settings {
   pause_hotkey: string;
   block_all_keys: boolean;
   /** Depth assumed for a key that is down but sends no analog data. */
-  unread_depth: "actuation" | "full";
+  unread_depth: "actuation" | "full" | "measured";
   /** Where an even diagonal points, degrees from horizontal (45 = even). */
   diagonal_angle: number;
 }

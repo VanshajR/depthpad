@@ -49,6 +49,9 @@ FAMILIES = [
              "identity": ["7153USHEXYXCPARGB", "7153BRHEXYXCPARGB"]},
             {"name": "IROK NA87", "vendor": "IROK", "layout": "IROK NA87 ANSI", "identity": ["GK8260HERGB"],
              "travel_mm": 4.0},
+            {"id": "ajazz-ak820-max-he-rgb", "name": "AJAZZ AK820 MAX HE (wired RGB, 0416:7372)", "vendor": "AJAZZ",
+             "layout": "AJAZZ AK820 MAX HE ANSI", "identity": ["SG8994HERGB"],
+             "note": "The Nuvoton revision HallJoy supports, firmware V1.13.17. Key range is learned as you press."},
         ],
     },
 ]

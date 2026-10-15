@@ -6,7 +6,7 @@ it with Depthpad; **untested** means the support is written from working code in
 but nobody has tried it with Depthpad yet. If you own one, please
 [tell us how it went](https://github.com/VanshajR/depthpad/issues/new?template=keyboard-support.yml).
 
-268 boards from 95 brands.
+269 boards from 95 brands.
 
 ## AIM1
 
@@ -17,7 +17,8 @@ but nobody has tried it with Depthpad yet. If you own one, please
 - AJAZZ AK680 MAX HE: untested, from HallJoy
 - AJAZZ AK680 V2 HE: **tested**, from Depthpad / HallJoy
 - AJAZZ AK680MC: untested, from HallJoy
-- AJAZZ AK820 MAX HE: untested, from Depthpad / HallJoy
+- AJAZZ AK820 MAX HE (Sonix revision, 0C45:80B1): untested, from Depthpad / HallJoy
+- AJAZZ AK820 MAX HE (wired RGB, 0416:7372): untested, from HallJoy
 - AJAZZ ALUX60: untested, from HallJoy
 - AJAZZ ALUX68 AIR: untested, from HallJoy
 - AJAZZ ALUX68 PRO: untested, from HallJoy

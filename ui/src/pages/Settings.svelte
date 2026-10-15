@@ -221,8 +221,8 @@
           <Toggle label="Snappy stick" checked={s.snappy_joystick} onchange={(v) => set("snappy_joystick", v)} /></div>
         <div class="row"><div><span>Diagonal angle</span><small>Where two keys together point, like W + D. 45° is an even diagonal; higher leans toward up and down, lower toward the sides.</small></div>
           <SliderField inline value={s.diagonal_angle ?? 45} min={10} max={80} step={1} unit="°" digits={0} onchange={(v) => set("diagonal_angle", v)} /></div>
-        <div class="row"><div><span>Keys without depth data</span><small>With one key held still, this keyboard only reports that key's depth. Another key pressed meanwhile counts as pressed to its actuation point, or fully.</small></div>
-          <Segmented options={["Actuation point", "Fully pressed"]} value={s.unread_depth === "full" ? 1 : 0} onchange={(i) => set("unread_depth", i ? "full" : "actuation")} /></div>
+        <div class="row"><div><span>Keys without depth data</span><small>Some keyboards (the AJAZZ AK680) report only the key that moved last. A key held meanwhile counts as pressed to its actuation point or fully; with Measured only it reads 0 until it moves, so every value is real.</small></div>
+          <Segmented options={["Actuation point", "Fully pressed", "Measured only"]} value={s.unread_depth === "full" ? 1 : s.unread_depth === "measured" ? 2 : 0} onchange={(i) => set("unread_depth", (["actuation", "full", "measured"] as const)[i])} /></div>
       </div>
     </section>
 

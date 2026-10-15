@@ -1,7 +1,8 @@
 //! AULA WIN 60 HE / WIN 68 HE / KP-TE153 and Redragon K673, K686 and K617 HE (iLLumiPC firmware),
 //! from HallJoy's `aula_w669_protocol.cpp` and `aula_w669_backend.cpp`; and the IROK NA87 (M484
 //! controller, the same frames), from `irok_nd75_protocol.cpp`, `irok_na87_protocol.h` and
-//! `irok_na87_backend.cpp`.
+//! `irok_na87_backend.cpp`; and the AJAZZ AK820 MAX HE wired RGB revision (M484, "SG8994HERGB"), from
+//! `irok_na87_backend.cpp` (RunAjazz) and `ajazz_raw_limits.h`.
 //!
 //! Vendor collection FF1B:0091, 64-byte reports with ID 1. Setup: device info (0x0D) gives the
 //! firmware product name, which picks the factory key matrix; 0x21/0x04 gives the travel range;
@@ -12,6 +13,11 @@
 //! The NA87 answers 0x0D with controller "M484" and product "GK8260HERGB"; its travel scale
 //! (0x21/18/04) must be 40, its key map comes from 0x10 in six rows of 22, and its events carry
 //! an 8-bit travel of 0-40.
+//!
+//! The AK820 MAX HE (M484, "SG8994HERGB", firmware V1.13.17 only) reads its key map the same way
+//! (keys may repeat), then 0x23 .. 1 streams raw sensor rows (row 1-6, 22 big-endian values) about
+//! a thousand times a second. Each sensor's range is learned from its own readings: the highest
+//! (median of three) is released, the lowest pressed, seeded with HallJoy's measured bottoms.
 
 use super::{le16, Deadline, Matrix};
 use crate::protocols::analog::{AnalogProtocol, Keys, Out};
@@ -184,6 +190,59 @@ enum Step {
 
 /// IROK NA87 (M484) rather than iLLumiPC.
 const NA87_PRODUCT: &str = "GK8260HERGB";
+/// AJAZZ AK820 MAX HE, wired RGB revision (M484).
+const AK820_PRODUCT: &str = "SG8994HERGB";
+const AK820_FIRMWARE: &str = "V1.13.17";
+/// The AK820's sensors (bit per column, per row): the firmware map is larger than the board.
+const AK820_SENSORS: [u32; 6] = [0xffbd, 0xdfff, 0xdfff, 0xdffd, 0xeffd, 0xfc47];
+/// A raw row going quiet this long (or one never arriving) means the stream stopped.
+const AK820_ROW_SECS: f64 = 0.1;
+const AK820_FIRST_ROW_SECS: f64 = 1.2;
+
+fn ak820_sensor(pos: usize) -> bool {
+    pos < SLOTS && AK820_SENSORS[pos / COLS] & (1 << (pos % COLS)) != 0
+}
+
+/// One AK820 sensor's learned range.
+#[derive(Clone, Copy, Default)]
+struct Range {
+    recent: [u16; 3],
+    next: usize,
+    samples: u32,
+    rest: u16,
+    full: u16,
+}
+
+impl Range {
+    /// HallJoy's measured bottom-out readings (other keys: their median, 1353).
+    fn initial_full(pos: usize) -> u16 {
+        match pos {
+            46 | 68 => 1353, 69 => 1355, 70 => 1366, 71 => 1431, 72 => 1341, 90 => 1345, 91 => 1317,
+            92 => 1293, 93 => 1382, 94 => 1301, 121 => 1289, _ => 1353,
+        }
+    }
+    /// Depth from a raw reading, once the range is wide enough to trust.
+    fn depth(&mut self, pos: usize, raw: u16) -> Option<f64> {
+        if raw == 0 {
+            return None;
+        }
+        if self.samples == 0 {
+            (self.recent, self.rest, self.full) = ([raw; 3], raw, Self::initial_full(pos));
+        }
+        self.recent[self.next] = raw;
+        self.next = (self.next + 1) % 3;
+        self.samples += 1;
+        let mut a = self.recent;
+        a.sort_unstable();
+        let v = a[1]; // a median of three drops single spikes
+        self.rest = self.rest.max(v);
+        self.full = self.full.min(v);
+        if self.rest as u32 <= self.full as u32 + 32 {
+            return None; // a key held since start: too little range yet
+        }
+        Some(if v >= self.rest { 0.0 } else if v <= self.full { 1.0 } else { (self.rest - v) as f64 / (self.rest - self.full) as f64 })
+    }
+}
 
 pub struct AulaW669 {
     step: Step,
@@ -196,6 +255,13 @@ pub struct AulaW669 {
     received: [bool; 10],
     matrix: Matrix,
     na87: bool,
+    /// AJAZZ AK820 MAX HE (wired RGB): the NA87's setup, then raw rows.
+    ak820: bool,
+    m484_unknown: bool,
+    ranges: Vec<Range>,
+    row_seen: [Option<f64>; ROWS],
+    live_since: Option<f64>,
+    now: f64,
 }
 
 impl Default for AulaW669 {
@@ -211,6 +277,12 @@ impl Default for AulaW669 {
             received: [false; 10],
             matrix: Matrix::default(),
             na87: false,
+            ak820: false,
+            m484_unknown: false,
+            ranges: vec![Range::default(); SLOTS],
+            row_seen: [None; ROWS],
+            live_since: None,
+            now: 0.0,
         }
     }
 }
@@ -232,6 +304,11 @@ impl AulaW669 {
                 self.map = factory_map(self.product.as_deref().unwrap_or(""));
                 self.received = [false; 10];
                 vec![request(KEYMAP, &[(2, 0x80)])]
+            }
+            Step::Live if self.ak820 => {
+                self.deadline.stop();
+                (self.ranges, self.row_seen, self.live_since) = (vec![Range::default(); SLOTS], [None; ROWS], None);
+                vec![request(0x23, &[(6, 1)])]
             }
             Step::Live if self.na87 => {
                 self.deadline.stop();
@@ -266,7 +343,15 @@ impl AnalogProtocol for AulaW669 {
         match self.step {
             Step::Identity => {
                 if let Some(f) = decode_info(d) {
-                    self.na87 = f.len() >= 5 && f[0] == "M484" && f[4] == NA87_PRODUCT;
+                    let m484 = f.len() >= 5 && f[0] == "M484";
+                    self.ak820 = m484 && f[4] == AK820_PRODUCT && f.get(5).is_some_and(|v| v.trim_end() == AK820_FIRMWARE);
+                    self.na87 = m484 && (f[4] == NA87_PRODUCT || self.ak820);
+                    // other M484 boards and firmware: HallJoy sends them nothing more, nor do we
+                    if m484 && !self.na87 {
+                        self.product = Some(format!("{} {}", f[4], f.get(5).map_or("", |v| v.trim_end())));
+                        self.m484_unknown = true;
+                        return (None, self.begin(Step::Failed));
+                    }
                 }
                 if let Some(p) = decode_product(d) {
                     self.product = Some(p);
@@ -287,11 +372,45 @@ impl AnalogProtocol for AulaW669 {
                 if let Some(row) = decode_na87_row(d, &mut self.map) {
                     self.received[row] = true;
                     if self.received[..6].iter().all(|&r| r) {
+                        if self.ak820 {
+                            // keys may repeat; only real sensors count, Fn (FA) as Fn
+                            for (pos, h) in self.map.iter_mut().enumerate() {
+                                if !ak820_sensor(pos) {
+                                    *h = 0;
+                                }
+                            }
+                            if self.map.iter().all(|&h| h == 0) {
+                                return (None, self.begin(Step::Failed));
+                            }
+                            self.attempts = 0;
+                            return (None, self.begin(Step::Live));
+                        }
                         if !na87_map_ok(&self.map) {
                             return (None, self.begin(Step::Failed));
                         }
                         self.attempts = 0;
                         return (Some(Keys::new()), self.begin(Step::Live));
+                    }
+                }
+            }
+            Step::Live if self.ak820 => {
+                // a raw row: 23 00 00 <row 1-6> 2C, then 22 big-endian values
+                if d.len() >= 5 + COLS * 2 && d[0] == 0x23 && d[1] == 0 && d[2] == 0 && (1..=6).contains(&d[3]) && d[4] == 44 {
+                    let row = d[3] as usize - 1;
+                    for col in 0..COLS {
+                        let pos = row * COLS + col;
+                        if !ak820_sensor(pos) {
+                            continue;
+                        }
+                        let raw = u16::from_be_bytes([d[5 + col * 2], d[6 + col * 2]]);
+                        let depth = self.ranges[pos].depth(pos, raw).unwrap_or(0.0);
+                        let code = match self.map[pos] { 0xFA => 0x409, h => h as u16 };
+                        self.matrix.set(pos, code, depth);
+                    }
+                    self.row_seen[row] = Some(self.now);
+                    // keys only once every row is live
+                    if self.row_seen.iter().all(Option::is_some) {
+                        return (Some(self.matrix.keys()), Vec::new());
                     }
                 }
             }
@@ -337,6 +456,16 @@ impl AnalogProtocol for AulaW669 {
     }
 
     fn tick(&mut self, now: f64) -> Vec<Out> {
+        self.now = now;
+        if self.step == Step::Live && self.ak820 {
+            let since = *self.live_since.get_or_insert(now);
+            // a dead row must not keep its keys pressed while the others go on
+            let stale = self.row_seen.iter().any(|seen| match seen {
+                Some(t) => now - t > AK820_ROW_SECS,
+                None => now - since > AK820_FIRST_ROW_SECS,
+            });
+            return if stale { self.start() } else { Vec::new() };
+        }
         match self.step {
             // no firmware name in time: carry on without it, as HallJoy does
             Step::Identity if self.deadline.expired(now, IDENTITY_SECS) => self.begin(Step::Travel),
@@ -351,6 +480,7 @@ impl AnalogProtocol for AulaW669 {
 
     fn problem(&self) -> Option<String> {
         (self.step == Step::Failed).then(|| match &self.product {
+            Some(p) if self.m484_unknown => format!("\"{p}\" (M484) isn't a model and firmware Depthpad knows"),
             Some(p) if !self.na87 && factory_map(p).iter().all(|&h| h == 0) => {
                 format!("firmware \"{p}\" isn't one Depthpad knows the key matrix of yet")
             }
@@ -359,11 +489,13 @@ impl AnalogProtocol for AulaW669 {
     }
 
     fn event_driven(&self) -> bool {
-        self.step == Step::Live
+        self.step == Step::Live && !self.ak820
     }
 
     fn stop(&mut self) -> Vec<Out> {
-        if self.step == Step::Live && self.na87 {
+        if self.step == Step::Live && self.ak820 {
+            vec![request(0x23, &[])]
+        } else if self.step == Step::Live && self.na87 {
             vec![request(ANALOG, &[(5, 0x18), (6, 0x03)])]
         } else if self.step == Step::Live {
             vec![request(ANALOG, &[(6, 0x03)])]
@@ -584,6 +716,73 @@ mod tests {
         // W at 20 of 40
         let ev = reply(&[(1, ANALOG), (5, 3), (6, 1), (7, 2), (8, 2), (9, 20)]);
         assert_eq!(p.input(1, &ev).0.unwrap()[&0x1A], 0.5);
+    }
+
+    fn m484_info(product: &str, firmware: &str) -> Vec<u8> {
+        let text = format!("M484,x,y,z,{product},{firmware}");
+        let mut d = reply(&[(1, INFO), (5, (5 + text.len()) as u8)]);
+        d[5..5 + text.len()].copy_from_slice(text.as_bytes());
+        d
+    }
+
+    #[test]
+    fn ajazz_ak820_session() {
+        let mut p = AulaW669::default();
+        p.start();
+        // only the exact firmware (space-padded) counts
+        p.input(1, &m484_info("SG8994HERGB", "V1.13.17  "));
+        assert!(p.ak820 && p.na87);
+        assert_eq!(p.identity().as_deref(), Some("SG8994HERGB"));
+        p.input(1, &reply(&[(1, ANALOG), (5, 2), (6, 0x04), (7, 40)]));
+        for row in 0..6u8 {
+            let (a, b) = if row == 5 { (255, 255) } else { (0, row + 1) };
+            let mut r = reply(&[(1, 0x10), (3, a), (4, b), (5, 22)]);
+            for c in 0..COLS {
+                r[5 + c] = 4 + (row as usize * COLS + c) as u8 % 100;
+            }
+            if row == 2 {
+                r[5 + 2] = 0x1A; // W at position 46
+            }
+            let (_, out) = p.input(1, &r);
+            if row == 5 {
+                assert_eq!((out[0].data[0], out[0].data[5]), (0x23, 1)); // raw rows on
+            }
+        }
+        assert!(!p.event_driven());
+        let row = |n: u8, w: u16| {
+            let mut d = reply(&[(1, 0x23), (4, n), (5, 44)]);
+            for c in 0..COLS {
+                let v: u16 = if n == 3 && c == 2 { w } else { 2400 };
+                d[5 + c * 2..7 + c * 2].copy_from_slice(&v.to_be_bytes());
+            }
+            d
+        };
+        // released at 2400 (bottom seeded at 1353 for W): nothing until all rows are in
+        for n in 1..=5 {
+            assert!(p.input(1, &row(n, 2400)).0.is_none());
+        }
+        assert!(p.input(1, &row(6, 2400)).0.unwrap().is_empty());
+        // W pressed to the middle of 2400..1353, three readings for the median
+        let mid = (2400 + 1353) / 2;
+        let mut keys = None;
+        for _ in 0..3 {
+            keys = p.input(1, &row(3, mid)).0;
+        }
+        assert!((keys.unwrap()[&0x1A] - 0.5).abs() < 0.01);
+        assert_eq!(p.stop()[0].data[..2], [0x23, 0]);
+        // a row going quiet restarts the session
+        p.tick(10.0);
+        p.tick(10.5);
+        assert_eq!(p.step, Step::Identity);
+    }
+
+    #[test]
+    fn ajazz_other_firmware_is_not_admitted() {
+        let mut p = AulaW669::default();
+        p.start();
+        p.input(1, &m484_info("SG8994HERGB", "V1.14.0"));
+        assert!(!p.ak820 && !p.na87);
+        assert!(p.problem().unwrap().contains("V1.14.0"));
     }
 
     #[test]

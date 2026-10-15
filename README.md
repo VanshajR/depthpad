@@ -35,15 +35,15 @@ Requires Windows 10 or 11 (64-bit). Depthpad checks for new versions at start-up
 ## Keyboards
 
 <!-- keyboards:start (generated) -->
-Depthpad supports **268 keyboards from 95 brands**; the full list, model by model, is in
+Depthpad supports **269 keyboards from 95 brands**; the full list, model by model, is in
 [docs/KEYBOARDS.md](docs/KEYBOARDS.md).
 
 | Brand | Boards |
 |---|---|
 | Attack Shark | Beat75, K85 + K85 Pro HE, R68 HE + X68 HE, R82 HE + R82 Pro HE, R85 HE + R85 Ultra and 13 more |
+| AJAZZ | **AK680 V2 HE (tested)**, AK680 MAX HE, AK680MC, AK820 MAX HE (Sonix revision, 0C45:80B1), AK820 MAX HE (wired RGB, 0416:7372) and 6 more |
 | ATK | 68 V2 Pro, 68 V3 + RS6+ + RS6 Ultra+ + RS6 Cube + 68 RX, EDGE 60 HE + 60 RX, EDGE 63 HE + RS63 Air, EDGE 75 HE and 6 more |
 | FL ESPORTS | Blend HE, D75 HE, D98 HE, FL750 (magnetic version), Flame65S and 6 more |
-| AJAZZ | **AK680 V2 HE (tested)**, AK680 MAX HE, AK680MC, AK820 MAX HE, ALUX60 and 5 more |
 | EPOMAKER | G84 HE JIS, HE108, HE60 Lite, HE60 Wired, HE60 Wireless and 5 more |
 | EWEADN | DEEP68 HE, DEEP80 HE (magnetic version), DEEP80 Pro HE (magnetic version), SEEK75, SMART 875 HE and 5 more |
 | AULA | HERO 68 HE PRO, KP-TE153, MINI 60 HE, MINI 60 HE MAX, MINI 60 HE PRO and 4 more |
