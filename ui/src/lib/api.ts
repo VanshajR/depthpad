@@ -18,7 +18,8 @@ export interface Device {
   /** Every key's rectangle, in key units from the top left. */
   layout: KeyRect[];
 }
-export interface KeyRect { pos: number; legend: string; x: number; y: number; w: number; h: number }
+/** `notch`: the bottom-left corner cut out of a tall key (ISO Enter), [width, from top] in key units. */
+export interface KeyRect { pos: number; legend: string; x: number; y: number; w: number; h: number; notch?: [number, number] }
 
 export interface Snapshot {
   state: "searching" | "streaming" | "noack" | "silent";

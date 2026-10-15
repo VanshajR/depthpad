@@ -1,8 +1,9 @@
-//! Driver for keyboards whose analog protocols come from AnalogSense (`protocols::analogsense`):
-//! Wooting, Razer, NuPhy, DrunkDeer, Keychron, Lemokey, MadLions and Bytech-based boards. These
-//! report every pressed key, so each key gets real depth; a key that stops being reported is
-//! sent as released. Keys still pressed are re-sent every few milliseconds, so the engine treats
-//! them as freshly measured. Untested on hardware: written from AnalogSense's working code.
+//! Driver for every keyboard with an analog protocol in `protocols` (from AnalogSense and
+//! HallJoy): the protocol says what to send, this does the I/O. These report every pressed key,
+//! so each key gets real depth; a key that stops being reported is sent as released. Keys still
+//! pressed are re-sent every few milliseconds, so the engine treats them as freshly measured.
+//! When the protocol learns what the firmware calls itself, the matching family variant is
+//! reported (`StreamSink::identified`). Untested on hardware: written from working code.
 
 use std::collections::{BTreeMap, HashMap};
 use std::io;
@@ -15,7 +16,8 @@ use super::{Connected, Session, StreamSink, StreamState, StreamStatus};
 use crate::device::Model;
 use crate::platform::hid::{input_report_ids, HidCollection};
 use crate::platform::now;
-use crate::protocols::analogsense::{for_driver, AnalogProtocol, Out};
+use crate::protocols::analog::{AnalogProtocol, Keys, Out, OutKind};
+use crate::protocols::{analog_protocol, UsbInfo};
 use crate::protocols::Sample;
 
 /// Re-send pressed keys this often, so they count as measured.
@@ -24,6 +26,8 @@ const REFRESH: f64 = 0.010;
 const CLEAR_AFTER: f64 = 1.0;
 /// ... and for this long: start the protocol again.
 const RESTART_AFTER: f64 = 2.0;
+/// After the protocol reports a problem, try the keyboard again this much later.
+const PROBLEM_RETRY: f64 = 10.0;
 
 /// Whether a program with this executable name is running.
 fn process_running(names: &[&str]) -> bool {
@@ -48,7 +52,7 @@ fn process_running(names: &[&str]) -> bool {
 }
 
 /// The collection to talk to: matching IDs, usage and (if the model says) report ID.
-fn find(model: &Model) -> io::Result<(String, u16, u16)> {
+fn find(model: &Model) -> io::Result<(String, UsbInfo)> {
     let api = hidapi::HidApi::new().map_err(|e| io::Error::other(e.to_string()))?;
     for d in api.device_list() {
         let Some(m) = model.usb_match(d.vendor_id(), d.product_id(), d.usage_page(), d.usage()) else { continue };
@@ -58,7 +62,8 @@ fn find(model: &Model) -> io::Result<(String, u16, u16)> {
                 continue;
             }
         }
-        return Ok((path, d.product_id(), d.usage_page()));
+        let product = d.product_string().unwrap_or("").trim().to_string();
+        return Ok((path, UsbInfo { vendor_id: d.vendor_id(), product_id: d.product_id(), usage_page: d.usage_page(), product }));
     }
     Err(io::Error::new(io::ErrorKind::NotFound, format!("{} not found. Connect it with the USB cable.", model.name)))
 }
@@ -100,47 +105,138 @@ impl Drop for AnalogReader {
     }
 }
 
-fn send(dev: &mut HidCollection, outs: Vec<Out>) -> io::Result<()> {
-    for o in outs {
+/// Send reports; feature reports asked for are read and handed to the protocol, and anything it
+/// sends in reply is sent too. Returns the last complete key set seen.
+fn send(dev: &mut HidCollection, proto: &mut dyn AnalogProtocol, outs: Vec<Out>) -> io::Result<Option<Keys>> {
+    let mut queue: std::collections::VecDeque<Out> = outs.into();
+    let mut keys = None;
+    let mut sent = 0;
+    while let Some(o) = queue.pop_front() {
+        sent += 1;
+        if sent > 256 {
+            return Err(io::Error::other("protocol sent too many reports in a row"));
+        }
         let mut r = Vec::with_capacity(o.data.len() + 1);
         r.push(o.report_id);
         r.extend_from_slice(&o.data);
-        dev.write(&r, 100)?;
+        match o.kind {
+            OutKind::Write => {
+                dev.write(&r, 100)?;
+            }
+            OutKind::Feature => dev.set_feature(&r)?,
+            OutKind::Pause(ms) => std::thread::sleep(Duration::from_millis(ms as u64)),
+            OutKind::GetFeature(len) => {
+                let data = dev.get_feature(o.report_id, len)?;
+                let (k, more) = proto.feature(o.report_id, &data);
+                if k.is_some() {
+                    keys = k;
+                }
+                queue.extend(more);
+            }
+        }
     }
-    Ok(())
+    Ok(keys)
 }
 
 struct Open {
     dev: HidCollection,
+    /// Where input reports come from when it isn't `dev` (see `AnalogProtocol::input_collection`).
+    input: Option<HidCollection>,
     proto: Box<dyn AnalogProtocol>,
+}
+
+impl Open {
+    fn read(&mut self, timeout_ms: u32) -> io::Result<Option<(u8, Vec<u8>)>> {
+        let dev = self.input.as_mut().unwrap_or(&mut self.dev);
+        Ok(dev.read(timeout_ms)?.map(|d| d.to_vec()).map(|d| (dev.last_report_id, d)))
+    }
+}
+
+/// Another collection of the keyboard at `path` with this usage: the one whose path shares the
+/// most with it (collections of one device differ only near the end of their paths).
+fn sibling(path: &str, vid: u16, pid: u16, (page, usage): (u16, u16)) -> io::Result<String> {
+    let api = hidapi::HidApi::new().map_err(|e| io::Error::other(e.to_string()))?;
+    let common = |p: &str| path.bytes().zip(p.bytes()).take_while(|(a, b)| a.eq_ignore_ascii_case(b)).count();
+    api.device_list()
+        .filter(|d| d.vendor_id() == vid && d.product_id() == pid && d.usage_page() == page && d.usage() == usage)
+        .map(|d| d.path().to_string_lossy().into_owned())
+        .filter(|p| p != path)
+        .max_by_key(|p| common(p))
+        .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "the keyboard's input collection is missing"))
 }
 
 fn open(model: &'static Model) -> io::Result<Open> {
     if model.driver == "razer" && !process_running(&["RazerAppEngine.exe", "Razer Synapse 3.exe", "Razer Synapse.exe"]) {
         return Err(io::Error::other(format!("{} needs Razer Synapse running to send analog data.", model.name)));
     }
-    let (path, pid, usage_page) = find(model)?;
-    let dev = HidCollection::open(&path)?;
-    let proto = for_driver(&model.driver, pid, usage_page)
+    let (path, usb) = find(model)?;
+    let mut dev = HidCollection::open(&path)?;
+    crate::device::note_opened(model, dev.vendor_id, dev.product_id);
+    let proto = analog_protocol(&model.driver, &usb)
         .ok_or_else(|| io::Error::other(format!("no protocol for driver {}", model.driver)))?;
-    Ok(Open { dev, proto })
+    if proto.control_channel() {
+        dev.use_control_channel();
+    }
+    // a keyboard that turns out not to stream doesn't need its input collection
+    let input = proto
+        .input_collection()
+        .and_then(|u| sibling(&path, dev.vendor_id, dev.product_id, u).ok())
+        .and_then(|p| HidCollection::open(&p).ok());
+    Ok(Open { dev, input, proto })
 }
 
 fn run(model: &'static Model, sink: Arc<dyn StreamSink>, stop: Arc<AtomicBool>, status: Arc<StreamStatus>) {
     let stroke = (model.travel_mm * 10.0).round() as u16; // 0.1 mm
     let full = model.travel_mm * 100.0; // 0.01 mm
     let to_usage: BTreeMap<u8, u16> = model.keys.iter().filter(|(_, k)| k.hid != 0).map(|(&p, k)| (p, k.hid)).collect();
+    let code_pos = model.code_positions();
     let mut kb: Option<Open> = None;
     let mut active: HashMap<u8, u16> = HashMap::new();
     let (mut last_report, mut last_refresh, mut cleared) = (now(), now(), false);
+    let mut identity_seen = false;
+    let mut retry_at = 0.0;
     let set_state = |s| *status.state.lock() = s;
-    while !stop.load(Ordering::SeqCst) {
+    let report_error = |msg: String| {
+        let mut err = status.error.lock();
+        if err.as_deref() != Some(msg.as_str()) {
+            sink.event(msg.clone());
+            *err = Some(msg);
+        }
+    };
+    // A complete key set: publish it, releasing keys that are no longer in it.
+    let publish = |keys: Keys, active: &mut HashMap<u8, u16>, t: f64| {
+        let mut now_active: HashMap<u8, u16> = HashMap::new();
+        for (code, v) in keys {
+            if let Some(&pos) = code_pos.get(&code) {
+                now_active.insert(pos, (v.clamp(0.0, 1.0) * full).round() as u16);
+            }
+        }
+        for (&pos, _) in active.iter().filter(|(p, _)| !now_active.contains_key(p)) {
+            sink.sample(Sample { position: pos, travel: 0, stroke }, t);
+        }
+        for (&pos, &travel) in &now_active {
+            sink.sample(Sample { position: pos, travel, stroke }, t);
+        }
+        *active = now_active;
+    };
+    loop {
+        if stop.load(Ordering::SeqCst) {
+            if let Some(k) = kb.as_mut() {
+                let outs = k.proto.stop();
+                let _ = send(&mut k.dev, k.proto.as_mut(), outs);
+            }
+            break;
+        }
         let Some(k) = kb.as_mut() else {
+            if now() < retry_at {
+                std::thread::sleep(Duration::from_millis(250));
+                continue;
+            }
             match open(model) {
                 Ok(mut o) => {
                     *status.error.lock() = None;
                     let start = o.proto.start();
-                    if let Err(e) = send(&mut o.dev, start) {
+                    if let Err(e) = send(&mut o.dev, o.proto.as_mut(), start) {
                         sink.event(format!("{}: {e}", model.name));
                         std::thread::sleep(Duration::from_millis(1000));
                         continue;
@@ -148,52 +244,45 @@ fn run(model: &'static Model, sink: Arc<dyn StreamSink>, stop: Arc<AtomicBool>, 
                     sink.connected(Connected { firmware: None, to_usage: to_usage.clone(), note: model.note.clone(), actuation: BTreeMap::new() });
                     sink.event(format!("{} connected", model.name));
                     set_state(StreamState::Streaming);
-                    (last_report, cleared) = (now(), false);
+                    (last_report, cleared, identity_seen) = (now(), false, false);
                     kb = Some(o);
                 }
                 Err(e) => {
-                    let msg = e.to_string();
-                    let mut err = status.error.lock();
-                    if err.as_deref() != Some(msg.as_str()) {
-                        sink.event(msg.clone());
-                        *err = Some(msg);
-                    }
-                    drop(err);
+                    report_error(e.to_string());
                     set_state(StreamState::Searching);
                     std::thread::sleep(Duration::from_millis(1000));
                 }
             }
             continue;
         };
-        let read = k.dev.read(5).map(|o| o.map(|d| d.to_vec()));
+        let read = match k.proto.read_timeout_ms() {
+            Some(ms) => k.read(ms),
+            None => Ok(None),
+        };
         let t = now();
         let result: io::Result<()> = (|| {
-            if let Some(data) = read? {
-                let id = k.dev.last_report_id;
+            let mut complete = None;
+            if let Some((id, data)) = read? {
                 let (keys, outs) = k.proto.input(id, &data);
-                send(&mut k.dev, outs)?;
-                if let Some(keys) = keys {
-                    status.packets.fetch_add(1, Ordering::Relaxed);
-                    last_report = t;
-                    cleared = false;
-                    set_state(StreamState::Streaming);
-                    let mut now_active: HashMap<u8, u16> = HashMap::new();
-                    for (usage, v) in keys {
-                        // positions are HID usages for these models; Fn and media keys aren't keys here
-                        let Ok(pos) = u8::try_from(usage) else { continue };
-                        if model.keys.contains_key(&pos) {
-                            now_active.insert(pos, (v.clamp(0.0, 1.0) * full).round() as u16);
-                        }
-                    }
-                    for (&pos, _) in active.iter().filter(|(p, _)| !now_active.contains_key(p)) {
-                        sink.sample(Sample { position: pos, travel: 0, stroke }, t);
-                    }
-                    for (&pos, &travel) in &now_active {
-                        sink.sample(Sample { position: pos, travel, stroke }, t);
-                    }
-                    active = now_active;
-                    last_refresh = t;
+                complete = keys;
+                if let Some(more) = send(&mut k.dev, k.proto.as_mut(), outs)? {
+                    complete = Some(more);
                 }
+            }
+            let outs = k.proto.tick(t);
+            if outs.is_empty() && k.proto.read_timeout_ms().is_none() {
+                std::thread::sleep(Duration::from_millis(1)); // nothing to read or send
+            }
+            if let Some(more) = send(&mut k.dev, k.proto.as_mut(), outs)? {
+                complete = Some(more);
+            }
+            if let Some(keys) = complete {
+                status.packets.fetch_add(1, Ordering::Relaxed);
+                last_report = t;
+                cleared = false;
+                set_state(StreamState::Streaming);
+                publish(keys, &mut active, t);
+                last_refresh = t;
             }
             if t - last_refresh >= REFRESH {
                 last_refresh = t;
@@ -201,8 +290,6 @@ fn run(model: &'static Model, sink: Arc<dyn StreamSink>, stop: Arc<AtomicBool>, 
                     sink.sample(Sample { position: pos, travel, stroke }, t);
                 }
             }
-            let outs = k.proto.tick(t);
-            send(&mut k.dev, outs)?;
             Ok(())
         })();
         if let Err(e) = result {
@@ -213,7 +300,29 @@ fn run(model: &'static Model, sink: Arc<dyn StreamSink>, stop: Arc<AtomicBool>, 
             sink.event(format!("keyboard lost ({e}); analog cleared"));
             continue;
         }
-        let silent = t - last_report;
+        if let Some(problem) = k.proto.problem() {
+            sink.lost();
+            active.clear();
+            kb = None;
+            set_state(StreamState::Searching);
+            report_error(format!("{}: {problem}", model.name));
+            retry_at = now() + PROBLEM_RETRY;
+            continue;
+        }
+        if !identity_seen {
+            if let Some(name) = k.proto.identity() {
+                identity_seen = true;
+                match crate::device::variant(model, &name) {
+                    Some(v) if v.id != model.id => {
+                        sink.event(format!("firmware says \"{name}\": this is a {}", v.name));
+                        sink.identified(v);
+                    }
+                    Some(_) => {}
+                    None => sink.event(format!("firmware says \"{name}\"; no exact layout for it yet, showing the {} one", model.name)),
+                }
+            }
+        }
+        let silent = if k.proto.event_driven() { 0.0 } else { t - last_report };
         if silent > CLEAR_AFTER && !cleared {
             sink.lost();
             active.clear();
@@ -225,7 +334,7 @@ fn run(model: &'static Model, sink: Arc<dyn StreamSink>, stop: Arc<AtomicBool>, 
             last_report = t;
             if let Some(k) = kb.as_mut() {
                 let start = k.proto.start();
-                if send(&mut k.dev, start).is_err() {
+                if send(&mut k.dev, k.proto.as_mut(), start).is_err() {
                     kb = None;
                 }
             }

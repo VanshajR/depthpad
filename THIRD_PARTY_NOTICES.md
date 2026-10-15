@@ -13,7 +13,21 @@ Parts of Depthpad are ported from HallJoy (https://github.com/PashOK7/HallJoy), 
 - the key-blocking rules (`crates/depthpad-core/src/routes.rs`, from `app.cpp` and `block_keys_policy.h`);
 - the key-assignment rules (`assigned_usage` in `crates/depthpad-core/src/protocols/sonix_ajazz.rs`, from `aula_mini60_native_model.h`);
 - the keyboard session handling: confirmed start and stop, clearing and reconnecting (`crates/depthpad-core/src/platform/drivers/sonix_ajazz.rs`, from `aula_mini60_diagnostic.cpp`);
-- the AULA MINI 60 HE (base, PRO, MAX) and AJAZZ AK820 MAX HE key maps, device-info lengths, identity checks and freshness window (`crates/depthpad-core/data/devices/aula-mini60-he*.json`, `ajazz-ak820-max-he.json`, `SonixOptions` in `device.rs`, from `aula_mini60_native_model.h`).
+- the AULA MINI 60 HE (base, PRO, MAX) and AJAZZ AK820 MAX HE key maps, device-info lengths, identity checks and freshness window (`crates/depthpad-core/data/devices/aula-mini60-he*.json`, `ajazz-ak820-max-he.json`, `SonixOptions` in `device.rs`, from `aula_mini60_native_model.h`);
+- the analog keyboard protocols in `crates/depthpad-core/src/protocols/halljoy/`, one module per HallJoy
+  protocol family: AULA WIN / Redragon / IROK NA87 (`aula_w669_protocol.cpp`, `irok_nd75_protocol.cpp`,
+  `irok_na87_*`), RongYuan and Attack Shark (`rongyuan_*`, `attackshark_*`), SparkPlayJoy and JingTai
+  (`aula_win60he_*`, `mg75_pro_*`, `wlmouse_ying75_protocol.h`, `jingtai_v1_profiles.h`), ATK / MADLIONS
+  Hex80 (`hex80_*`, `generated/atk_hex80_family.h`), IPI / Royal Kludge (`ipi_protocol.h`,
+  `generated/ipi_models.h`, `addressed_analog_backend.cpp`), SparkLink (`backend_sparklink.inc`),
+  SteelSeries Apex (`steelseries_apex_*`) and SayoDevice O3C (`sayo_o3c_protocol.h`, `backend_sayo.inc`),
+  with their generated tables (`*_tables.rs`) built from HallJoy's model data;
+- the keyboard layouts and identity catalogue (`crates/depthpad-core/data/devices/*.json` and
+  `data/variants/*.json` for those families, converted from `generated/layout_pipeline/` and HallJoy's other
+  layout headers);
+- the DrunkDeer model query, the NuPhy record format and the Keychron K4/K6/Q2/Q4 HE and Lemokey P1 HE ISO
+  matrices in `protocols/analogsense.rs` and `analogsense_tables.rs`, from HallJoy's copy of AnalogSense
+  (`third_party/UniversalAnalogPluginFixed`).
 
 ## ViGEmBus (bundled installer)
 

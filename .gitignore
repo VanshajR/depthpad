@@ -12,6 +12,7 @@
 # Python prototype environments and builds
 .venv/
 __pycache__/
+/tools/halljoy/hj_layouts.json
 *.pyc
 /dist/
 /prototype/build/work/

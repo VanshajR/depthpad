@@ -1,0 +1,29 @@
+{
+  "id": "sayodevice-o3c",
+  "name": "SayoDevice O3C",
+  "vendor": "SayoDevice",
+  "driver": "sayo",
+  "status": "untested",
+  "usb": [
+    {
+      "vid": "8089",
+      "pid": "0009",
+      "usage_page": "FF12",
+      "usage": "0002"
+    }
+  ],
+  "travel_mm": 4.0,
+  "width_units": 3.0,
+  "rows": [
+    [
+      [29, "Z", 1.0],
+      [27, "X", 1.0],
+      [6, "C", 1.0]
+    ]
+  ],
+  "keys": {
+    "6": { "hid": 6, "key": "KeyC" },
+    "27": { "hid": 27, "key": "KeyX" },
+    "29": { "hid": 29, "key": "KeyZ" }
+  }
+}

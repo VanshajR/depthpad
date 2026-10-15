@@ -33,6 +33,11 @@
   let height = $derived(Math.max(1, app.device?.height_units ?? 5));
   let keys = $derived((app.device?.layout ?? []).map((k) => ({
     pos: k.pos, legend: k.legend, left: k.x / units, top: k.y / height, width: k.w / units, height: k.h / height,
+    // an ISO Enter: the L shape, with the legend in the wide top part
+    clip: k.notch
+      ? `polygon(0 0, 100% 0, 100% 100%, ${(k.notch[0] / k.w) * 100}% 100%, ${(k.notch[0] / k.w) * 100}% ${(k.notch[1] / k.h) * 100}%, 0 ${(k.notch[1] / k.h) * 100}%)`
+      : undefined,
+    legendTop: k.notch ? (k.notch[1] / k.h) * 100 : undefined,
   })));
 
   let dropPos = $state<number | null>(null);
@@ -61,7 +66,7 @@
         {@const preview = drag.target !== null && dropPos === k.pos}
         {@const bound = preview ? drag.target : bindings.get(k.pos)}
         <div class="slot" style:left="{k.left * 100}%" style:top="{k.top * 100}%" style:width="{k.width * 100}%"
-             style:height="{k.height * 100}%"
+             style:height="{k.height * 100}%" style:clip-path={k.clip}
              style:--d={depth} class:held={!!d && d.source !== "stream"} class:on={depth > 0.02}>
           {#if depth > 0.02}<div class="glow"></div>{/if}
           <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
@@ -91,7 +96,9 @@
                ondragover={(e) => { if (drag.target && selectable && mappable(k.pos)) { e.preventDefault(); dropPos = k.pos; } }}
                ondragleave={() => { if (dropPos === k.pos) dropPos = null; }}
                ondrop={(e) => drop(e, k.pos)}>
-            <span class="legend" class:long={k.legend.length > 2}>{k.legend}</span>
+            <span class="legend" class:long={k.legend.length > 2}
+                  style:position={k.legendTop ? "absolute" : undefined} style:top={k.legendTop ? `${k.legendTop / 2}%` : undefined}
+                  style:translate={k.legendTop ? "0 -50%" : undefined}>{k.legend}</span>
             {#if bound}<span class="glyph" class:ghost={preview}><Glyph target={bound} size={40} active={depth > 0.45} /></span>{/if}
           </div>
         </div>

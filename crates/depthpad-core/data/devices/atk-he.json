@@ -1,0 +1,723 @@
+{
+  "id": "atk-he",
+  "name": "ATK / MADLIONS HE keyboard (Hex80 protocol)",
+  "vendor": "ATK",
+  "driver": "hex80",
+  "status": "untested",
+  "usb": [
+    {
+      "vid": "373B",
+      "pid": "1044",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1048",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1082",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "108E",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1090",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "109C",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "109D",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "109E",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "10AF",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "10B0",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1112",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1114",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1125",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "113B",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "113C",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "113D",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "115F",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1160",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1161",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1162",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1163",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1164",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1168",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1169",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "116A",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "116B",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1174",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1176",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1177",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1197",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1198",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "119A",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11A8",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11AD",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11AE",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11AF",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11B0",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11B8",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11B9",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11BA",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11C0",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11C1",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11C5",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11C6",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11C7",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11D0",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11D6",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11DA",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11DF",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11E0",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11E1",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11E6",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11E8",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11E9",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11EA",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11EB",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "11FC",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1206",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1209",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "120F",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1210",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1220",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1221",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "122B",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1250",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1257",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1258",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1259",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "125B",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "125C",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "126A",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "126B",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1294",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1295",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "12AD",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "12AE",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "12C1",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "12CF",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "12EB",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "12F0",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "12FC",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "12FD",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "12FE",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1318",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1335",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1336",
+      "usage_page": "FF60",
+      "usage": "0061"
+    },
+    {
+      "vid": "373B",
+      "pid": "1339",
+      "usage_page": "FF60",
+      "usage": "0061"
+    }
+  ],
+  "travel_mm": 3.3,
+  "width_units": 18.25,
+  "rows": [
+    [
+      [41, "Esc", 1.0],
+      { "pos": 58, "legend": "F1", "w": 1.0, "x": 0.25 },
+      [59, "F2", 1.0],
+      [60, "F3", 1.0],
+      [61, "F4", 1.0],
+      { "pos": 62, "legend": "F5", "w": 1.0, "x": 0.25 },
+      [63, "F6", 1.0],
+      [64, "F7", 1.0],
+      [65, "F8", 1.0],
+      { "pos": 66, "legend": "F9", "w": 1.0, "x": 0.25 },
+      [67, "F10", 1.0],
+      [68, "F11", 1.0],
+      [69, "F12", 1.0],
+      { "pos": 70, "legend": "PrtSc", "w": 1.0, "x": 1.5 },
+      [71, "ScrLk", 1.0],
+      [72, "Pause", 1.0]
+    ],
+    [
+      [53, "`", 1.0],
+      [30, "1", 1.0],
+      [31, "2", 1.0],
+      [32, "3", 1.0],
+      [33, "4", 1.0],
+      [34, "5", 1.0],
+      [35, "6", 1.0],
+      [36, "7", 1.0],
+      [37, "8", 1.0],
+      [38, "9", 1.0],
+      { "pos": 39, "legend": "0", "w": 0.93, "x": 0.07 },
+      [45, "-", 1.0],
+      { "pos": 46, "legend": "=", "w": 1.0, "x": 0.07 },
+      { "pos": 42, "legend": "Backspace", "w": 1.92, "x": 0.01 },
+      { "pos": 73, "legend": "Ins", "w": 1.0, "x": 0.25 },
+      [74, "Home", 1.0],
+      [75, "PgUp", 1.0]
+    ],
+    [
+      [43, "Tab", 1.5],
+      [20, "Q", 1.0],
+      [26, "W", 1.0],
+      [8, "E", 1.0],
+      [21, "R", 1.0],
+      [23, "T", 1.0],
+      [28, "Y", 1.0],
+      [24, "U", 1.0],
+      [12, "I", 1.0],
+      [18, "O", 1.0],
+      [19, "P", 1.0],
+      [47, "[", 1.0],
+      [48, "]", 1.0],
+      [49, "\\", 1.5],
+      { "pos": 76, "legend": "Del", "w": 1.0, "x": 0.25 },
+      [77, "End", 1.0],
+      [78, "PgDn", 1.0]
+    ],
+    [
+      [57, "Caps", 1.75],
+      [4, "A", 1.0],
+      [22, "S", 1.0],
+      [7, "D", 1.0],
+      [9, "F", 1.0],
+      [10, "G", 1.0],
+      [11, "H", 1.0],
+      [13, "J", 1.0],
+      [14, "K", 1.0],
+      [15, "L", 1.0],
+      { "pos": 51, "legend": ";", "w": 1.0, "x": 0.06 },
+      { "pos": 52, "legend": "'", "w": 1.0, "x": 0.01 },
+      { "pos": 40, "legend": "Enter", "w": 2.16, "x": 0.02 }
+    ],
+    [
+      [225, "Shift", 2.0],
+      { "pos": 29, "legend": "Z", "w": 1.0, "x": 0.07 },
+      { "pos": 27, "legend": "X", "w": 1.0, "x": 0.07 },
+      { "pos": 6, "legend": "C", "w": 1.0, "x": 0.11 },
+      [25, "V", 1.0],
+      { "pos": 5, "legend": "B", "w": 1.0, "x": 0.1 },
+      { "pos": 17, "legend": "N", "w": 1.07, "x": 0.06 },
+      { "pos": 16, "legend": "M", "w": 1.0, "x": 0.02 },
+      { "pos": 54, "legend": ",", "w": 1.0, "x": 0.06 },
+      { "pos": 55, "legend": ".", "w": 1.0, "x": 0.06 },
+      { "pos": 56, "legend": "/", "w": 1.0, "x": 0.13 },
+      [229, "Shift", 2.25],
+      { "pos": 82, "legend": "↑", "w": 1.0, "x": 1.25 }
+    ],
+    [
+      [224, "Ctrl", 1.25],
+      [227, "Win", 1.25],
+      [226, "Alt", 1.25],
+      [44, "", 6.5],
+      [230, "Alt", 1.25],
+      [231, "Win", 1.18],
+      [232, "Fn", 1.23],
+      [228, "Ctrl", 1.07],
+      { "pos": 80, "legend": "←", "w": 1.0, "x": 0.27 },
+      [81, "↓", 1.0],
+      [79, "→", 1.0]
+    ]
+  ],
+  "keys": {
+    "4": { "hid": 4, "key": "KeyA" },
+    "5": { "hid": 5, "key": "KeyB" },
+    "6": { "hid": 6, "key": "KeyC" },
+    "7": { "hid": 7, "key": "KeyD" },
+    "8": { "hid": 8, "key": "KeyE" },
+    "9": { "hid": 9, "key": "KeyF" },
+    "10": { "hid": 10, "key": "KeyG" },
+    "11": { "hid": 11, "key": "KeyH" },
+    "12": { "hid": 12, "key": "KeyI" },
+    "13": { "hid": 13, "key": "KeyJ" },
+    "14": { "hid": 14, "key": "KeyK" },
+    "15": { "hid": 15, "key": "KeyL" },
+    "16": { "hid": 16, "key": "KeyM" },
+    "17": { "hid": 17, "key": "KeyN" },
+    "18": { "hid": 18, "key": "KeyO" },
+    "19": { "hid": 19, "key": "KeyP" },
+    "20": { "hid": 20, "key": "KeyQ" },
+    "21": { "hid": 21, "key": "KeyR" },
+    "22": { "hid": 22, "key": "KeyS" },
+    "23": { "hid": 23, "key": "KeyT" },
+    "24": { "hid": 24, "key": "KeyU" },
+    "25": { "hid": 25, "key": "KeyV" },
+    "26": { "hid": 26, "key": "KeyW" },
+    "27": { "hid": 27, "key": "KeyX" },
+    "28": { "hid": 28, "key": "KeyY" },
+    "29": { "hid": 29, "key": "KeyZ" },
+    "30": { "hid": 30, "key": "Digit1" },
+    "31": { "hid": 31, "key": "Digit2" },
+    "32": { "hid": 32, "key": "Digit3" },
+    "33": { "hid": 33, "key": "Digit4" },
+    "34": { "hid": 34, "key": "Digit5" },
+    "35": { "hid": 35, "key": "Digit6" },
+    "36": { "hid": 36, "key": "Digit7" },
+    "37": { "hid": 37, "key": "Digit8" },
+    "38": { "hid": 38, "key": "Digit9" },
+    "39": { "hid": 39, "key": "Digit0" },
+    "40": { "hid": 40, "key": "Enter" },
+    "41": { "hid": 41, "key": "Escape" },
+    "42": { "hid": 42, "key": "Backspace" },
+    "43": { "hid": 43, "key": "Tab" },
+    "44": { "hid": 44, "key": "Space" },
+    "45": { "hid": 45, "key": "Minus" },
+    "46": { "hid": 46, "key": "Equal" },
+    "47": { "hid": 47, "key": "BracketLeft" },
+    "48": { "hid": 48, "key": "BracketRight" },
+    "49": { "hid": 49, "key": "Backslash" },
+    "51": { "hid": 51, "key": "Semicolon" },
+    "52": { "hid": 52, "key": "Quote" },
+    "53": { "hid": 53, "key": "Backquote" },
+    "54": { "hid": 54, "key": "Comma" },
+    "55": { "hid": 55, "key": "Period" },
+    "56": { "hid": 56, "key": "Slash" },
+    "57": { "hid": 57, "key": "CapsLock" },
+    "58": { "hid": 58, "key": "F1" },
+    "59": { "hid": 59, "key": "F2" },
+    "60": { "hid": 60, "key": "F3" },
+    "61": { "hid": 61, "key": "F4" },
+    "62": { "hid": 62, "key": "F5" },
+    "63": { "hid": 63, "key": "F6" },
+    "64": { "hid": 64, "key": "F7" },
+    "65": { "hid": 65, "key": "F8" },
+    "66": { "hid": 66, "key": "F9" },
+    "67": { "hid": 67, "key": "F10" },
+    "68": { "hid": 68, "key": "F11" },
+    "69": { "hid": 69, "key": "F12" },
+    "70": { "hid": 70, "key": "PrintScreen" },
+    "71": { "hid": 71, "key": "ScrollLock" },
+    "72": { "hid": 72, "key": "Pause" },
+    "73": { "hid": 73, "key": "Insert" },
+    "74": { "hid": 74, "key": "Home" },
+    "75": { "hid": 75, "key": "PageUp" },
+    "76": { "hid": 76, "key": "Delete" },
+    "77": { "hid": 77, "key": "End" },
+    "78": { "hid": 78, "key": "PageDown" },
+    "79": { "hid": 79, "key": "ArrowRight" },
+    "80": { "hid": 80, "key": "ArrowLeft" },
+    "81": { "hid": 81, "key": "ArrowDown" },
+    "82": { "hid": 82, "key": "ArrowUp" },
+    "224": { "hid": 224, "key": "ControlLeft" },
+    "225": { "hid": 225, "key": "ShiftLeft" },
+    "226": { "hid": 226, "key": "AltLeft" },
+    "227": { "hid": 227, "key": "MetaLeft" },
+    "228": { "hid": 228, "key": "ControlRight" },
+    "229": { "hid": 229, "key": "ShiftRight" },
+    "230": { "hid": 230, "key": "AltRight" },
+    "231": { "hid": 231, "key": "MetaRight" },
+    "232": { "hid": 0, "key": "Fn", "code": 1033 }
+  }
+}

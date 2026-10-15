@@ -104,6 +104,7 @@ struct App {
     /// What the engine calls when a profile hotkey fires (set once the app is running).
     on_action: Option<ActionFn>,
     on_pause: Option<std::sync::Arc<dyn Fn(bool) + Send + Sync>>,
+    on_identified: Option<std::sync::Arc<dyn Fn(&'static Model) + Send + Sync>>,
 }
 
 type AppState = Mutex<App>;
@@ -129,6 +130,9 @@ impl App {
             }
             if let Some(f) = &self.on_pause {
                 e.on_pause(f.clone());
+            }
+            if let Some(f) = &self.on_identified {
+                e.on_identified(f.clone());
             }
             e.set_pad(self.prefs.controller, self.prefs.unplug_when_paused);
         }
@@ -161,13 +165,15 @@ impl App {
     fn keyboards(&self, found: &[Found]) -> Keyboards {
         let mut list: Vec<KeyboardEntry> = Vec::new();
         for m in connected_models(found).into_iter().chain(std::iter::once(self.model)) {
+            // a family whose exact board is known shows as that board
+            let m = if m.id == self.model.family_id() { self.model } else { m };
             if !list.iter().any(|k| k.id == m.id) {
                 list.push(KeyboardEntry {
                     id: m.id.clone(),
                     name: m.name.clone(),
                     vendor: m.vendor.clone(),
                     status: m.status,
-                    connected: found.iter().any(|f| f.model.id == m.id),
+                    connected: found.iter().any(|f| f.model.id == m.family_id()),
                     note: m.note.clone(),
                 });
             }
@@ -817,7 +823,7 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent,
                                              Some(vec!["--minimized"])))
-        .manage(Mutex::new(App { model, needs_choice, on_action: None, on_pause: None, engine: Some(engine), store, active, prefs: saved, recording: None }))
+        .manage(Mutex::new(App { model, needs_choice, on_action: None, on_pause: None, on_identified: None, engine: Some(engine), store, active, prefs: saved, recording: None }))
         .invoke_handler(tauri::generate_handler![
             app_info, keys, device, keyboards, use_keyboard, set_default_keyboard, snapshot, set_paused, profiles, active_profile, save_profile, activate_profile,
             new_profile, rename_profile, delete_profile, import_profile, export_profile, builtin_layout, prefs,
@@ -837,6 +843,22 @@ pub fn run() {
                         let name = handle.state::<AppState>().lock().active.name.clone();
                         indicate(&handle, Cue::Resumed, "Active", &name);
                     }
+                }));
+                let handle = app.handle().clone();
+                a.on_identified = Some(std::sync::Arc::new(move |variant| {
+                    // switching restarts the engine, which waits for the driver thread we're on
+                    let handle = handle.clone();
+                    std::thread::spawn(move || {
+                        let found = detect();
+                        let st = handle.state::<AppState>();
+                        let mut a = st.lock();
+                        if a.model.family_id() == variant.family_id() {
+                            a.use_model(variant);
+                            let k = a.keyboards(&found);
+                            drop(a);
+                            let _ = handle.emit("keyboards", &k);
+                        }
+                    });
                 }));
                 a.wire_engine();
             }

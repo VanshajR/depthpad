@@ -86,6 +86,8 @@ struct Inner {
     on_action: Mutex<Option<ActionFn>>,
     /// Told (on its own thread) whenever pausing changes, from any source.
     on_pause: Mutex<Option<Arc<dyn Fn(bool) + Send + Sync>>>,
+    /// Told (on the driver's thread) when the keyboard turns out to be a family variant.
+    on_identified: Mutex<Option<Arc<dyn Fn(&'static Model) + Send + Sync>>>,
     events: Mutex<VecDeque<String>>,
     output: Mutex<Report>,
     firmware: Mutex<Option<String>>,
@@ -291,6 +293,12 @@ impl StreamSink for Sink {
     fn event(&self, text: String) {
         self.0.event(text);
     }
+    fn identified(&self, variant: &'static Model) {
+        let f = self.0.on_identified.lock().clone();
+        if let Some(f) = f {
+            f(variant);
+        }
+    }
     fn key(&self, pos: u8, down: bool, t: f64) {
         self.0.on_key(pos, down, t);
     }
@@ -352,6 +360,7 @@ impl Engine {
             hotkeys_suspended: AtomicBool::new(false),
             on_action: Mutex::new(None),
             on_pause: Mutex::new(None),
+            on_identified: Mutex::new(None),
             events: Mutex::new(VecDeque::new()),
             output: Mutex::new(Report::default()),
             firmware: Mutex::new(None),
@@ -439,6 +448,12 @@ impl Engine {
     }
 
     /// What to do when a hotkey other than pause fires.
+    /// Called when the keyboard identifies as a variant of the model being run. It runs on the
+    /// driver's thread: restarting the engine from inside it would wait on itself.
+    pub fn on_identified(&self, f: Arc<dyn Fn(&'static Model) + Send + Sync>) {
+        *self.inner.on_identified.lock() = Some(f);
+    }
+
     pub fn on_action(&self, f: ActionFn) {
         *self.inner.on_action.lock() = Some(f);
     }

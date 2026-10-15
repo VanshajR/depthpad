@@ -242,7 +242,7 @@ fn main() {
     // key events from this keyboard only, during steps
     let sink: Sink = Arc::new(Mutex::new(None));
     let mut model: Model = device::fallback().clone();
-    model.usb = vec![UsbMatch { vid, pid: Some(pid), usage_page: None, usage: None, report_id: None }];
+    model.usb = vec![UsbMatch { vid: Some(vid), pid: Some(pid), usage_page: None, usage: None, report_id: None }];
     let model: &'static Model = Box::leak(Box::new(model));
     let ks = sink.clone();
     let mut keys = DeviceKeys::start(

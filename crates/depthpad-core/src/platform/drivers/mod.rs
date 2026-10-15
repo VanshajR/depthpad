@@ -54,6 +54,9 @@ pub trait StreamSink: Send + Sync + 'static {
     /// A key going down or up, for drivers that report key state themselves. Physical
     /// keyboards don't need this: their key events come from Raw Input.
     fn key(&self, _pos: u8, _down: bool, _t: f64) {}
+    /// The keyboard turned out to be this variant of the model being run (see
+    /// `device::variant`): the app switches to it.
+    fn identified(&self, _variant: &'static crate::device::Model) {}
 }
 
 pub struct StreamStatus {
@@ -120,9 +123,7 @@ pub fn start(model: &'static Model, sink: Arc<dyn StreamSink>) -> Box<dyn Sessio
     match model.driver.as_str() {
         "sonix-ajazz" => Box::new(sonix_ajazz::StreamReader::start(model, sink)),
         "replay" => Box::new(replay::Replay::start(model, sink)),
-        "wooting" | "razer" | "nuphy" | "drunkdeer" | "keychron" | "madlions" | "bytech" => {
-            Box::new(analog::AnalogReader::start(model, sink))
-        }
+        d if crate::protocols::analog_protocol(d, &Default::default()).is_some() => Box::new(analog::AnalogReader::start(model, sink)),
         other => Box::new(Unsupported::new(format!("{} needs the \"{other}\" driver, which this version doesn't have.", model.name))),
     }
 }

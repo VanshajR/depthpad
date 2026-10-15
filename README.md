@@ -34,20 +34,38 @@ Requires Windows 10 or 11 (64-bit). Depthpad checks for new versions at start-up
 
 ## Keyboards
 
-| Keyboard | Status |
-|---|---|
-| AJAZZ AK680 V2 HE (`0C45:80BC`) | **Tested** |
-| AULA MINI 60 HE, HE PRO, HE MAX | Untested |
-| AJAZZ AK820 MAX HE | Untested |
-| Wooting (any board) | Untested |
-| Razer Huntsman V2 Analog, Mini Analog, V3 Pro, V3 Pro TKL, V3 Pro Mini (Razer Synapse must be running) | Untested |
-| NuPhy HE boards | Untested |
-| DrunkDeer boards | Untested |
-| Keychron Q1 HE, Q3 HE, Q5 HE, K2 HE · Lemokey P1 HE | Untested |
-| MadLions MAD60HE, MAD68HE, MAD68R | Untested |
-| Redragon K709 HE | Untested |
+<!-- keyboards:start (generated) -->
+Depthpad supports **268 keyboards from 95 brands**; the full list, model by model, is in
+[docs/KEYBOARDS.md](docs/KEYBOARDS.md).
 
-**Untested** means the support is written from working code in [HallJoy](https://github.com/PashOK7/HallJoy) (AULA, AK820) or [AnalogSense](https://github.com/AnalogSense/JavaScript-SDK) (the rest), but nobody has tried it with Depthpad yet. If you own one, please try it and [tell us how it went](https://github.com/VanshajR/depthpad/issues/new?template=keyboard-support.yml).
+| Brand | Boards |
+|---|---|
+| Attack Shark | Beat75, K85 + K85 Pro HE, R68 HE + X68 HE, R82 HE + R82 Pro HE, R85 HE + R85 Ultra and 13 more |
+| ATK | 68 V2 Pro, 68 V3 + RS6+ + RS6 Ultra+ + RS6 Cube + 68 RX, EDGE 60 HE + 60 RX, EDGE 63 HE + RS63 Air, EDGE 75 HE and 6 more |
+| FL ESPORTS | Blend HE, D75 HE, D98 HE, FL750 (magnetic version), Flame65S and 6 more |
+| AJAZZ | **AK680 V2 HE (tested)**, AK680 MAX HE, AK680MC, AK820 MAX HE, ALUX60 and 5 more |
+| EPOMAKER | G84 HE JIS, HE108, HE60 Lite, HE60 Wired, HE60 Wireless and 5 more |
+| EWEADN | DEEP68 HE, DEEP80 HE (magnetic version), DEEP80 Pro HE (magnetic version), SEEK75, SMART 875 HE and 5 more |
+| AULA | HERO 68 HE PRO, KP-TE153, MINI 60 HE, MINI 60 HE MAX, MINI 60 HE PRO and 4 more |
+| Valkyrie | VK 99 Gaming (Naruto), VK Mag68, VK Mag68 Max, VK Mag75, VK Mag75 Lite and 4 more |
+| IROK | Mercury68, Mercury68 Pro, MG75 Max, MG75 Pro, NA87 and 3 more |
+| Keychron | K2 HE, K4 HE, K6 HE, Q1 HE, Q2 HE and 3 more |
+| Redragon | K617 HE, K673 HE (BR), K673 HE (UK), K673 HE (US), K686 HE (BR) and 3 more |
+| DrunkDeer | A75, A75 ISO, A75 Pro, G60, G65 and 2 more |
+| MonsGeek | FUN60 Pro, FUN60 Ultra TMR, FUN68 HE, FUN75, M1 V5 TMR and 2 more |
+| Keydous | NJ68 Pro-CP, NJ80-CP V3 HE, NJ81-CP, NJ81-CP V3 HE, NJ98-CP and 1 more |
+| Xinmeng | Beat65, Beat68, Beat75, X87 TMR, X98 V3 (magnetic version) and 1 more |
+| Akko | MOD 007 V5 HE, MOD007B V3 HE, MOD007S V3 HE, Ray68 HE, TAC75 HE |
+| Razer | Huntsman Mini Analog, Huntsman V2 Analog, Huntsman V3 Pro, Huntsman V3 Pro Mini, Huntsman V3 Pro Tenkeyless |
+| GamaKay | NS68, NS75, TK75 HE, TK75 TMR |
+| HATOR | Skyfall 65 MAG Ultima 8K Wireless, Skyfall 65 MAG Ultra 8K, Skyfall 80 MAG Ultima 8K Wireless, Skyfall 80 MAG Ultra 8K |
+| IPI | Aurora75 PRO, flash68, QBZ65 + AURORA65 + AURORA65W + RAIN65, QBZ75 + Aurora 75 |
+| JINGSU | KA67, KB98, KCC04A, KE87 |
+
+Also: AIM1, ANGRYSHARK, ANTGAMER, ARDOR GAMING, ASTROMEDA, ATWO, Blackstorm, BOYI, CHERRY XTRFY, COLORFUL, DARKFORCE, DSPIXEL, E7, EDRA, Everglide, EvoFox, FREEWOLF, Fuego, Funbey, Fury, G TUNE, Game Arena, GAMEBOOSTER, GAMEPOWER, GamePro, GravaStar, HAVIT, HAWK Gaming, IDEEZ, IDJ, IYX, JEDEL, KiiBOOM, Koda, KYSONA, Lemokey, LinkerFoo, LOMZ, M4G, MadLions, MageGee, MAMBASNAKE, MechLands, MEETION, MICROPACK, MSI, Ninjadog, NOS, Nova Gaming, NuPhy, Nyfter, Oniverse, OUSAID, PIIFOX, PSYCommu, Rampage, Royal Kludge, ROYALAXE, SALPIDO, SARU, SAVIO, SayoDevice, Skyloong, SteelSeries, Sunsonny, Syntech, Titan Nation, UluGames, URX, Veekos, WLMOUSE, Womier, Wooting, YUNZII.
+<!-- keyboards:end -->
+
+Only the AJAZZ AK680 V2 HE has been tested with Depthpad so far. Everything else is written from working code in [HallJoy](https://github.com/PashOK7/HallJoy) and [AnalogSense](https://github.com/AnalogSense/JavaScript-SDK), but nobody has tried it with Depthpad yet. Boards sold under many brands (RongYuan, SparkPlayJoy, iLLumiPC firmware) are recognised by what their firmware reports, and Depthpad then draws that exact model. If you own one, please try it and [tell us how it went](https://github.com/VanshajR/depthpad/issues/new?template=keyboard-support.yml).
 
 **Your keyboard isn't listed?** Open Depthpad → Settings → Keyboard → **Create report** (or run `depthpad-probe.exe` from the release). It records what your keyboard sends during a few guided key presses, without changing anything on it, and saves a file to attach to a [keyboard support request](https://github.com/VanshajR/depthpad/issues/new?template=keyboard-support.yml). See [docs/KEYBOARD_REPORTS.md](docs/KEYBOARD_REPORTS.md).
 
@@ -71,7 +89,7 @@ Contributions are welcome, especially support for more keyboards. Start with [CO
 
 ## Credits
 
-- [HallJoy](https://github.com/PashOK7/HallJoy) by PashOK7: stick behaviour, key-blocking rules, keyboard session handling, and the AULA MINI 60 HE and AJAZZ AK820 MAX HE key maps and identity checks (AGPL-3.0).
+- [HallJoy](https://github.com/PashOK7/HallJoy) by PashOK7: stick behaviour, key-blocking rules, keyboard session handling, and most of the keyboard support: its analog protocols, key maps, layouts and model identification (AGPL-3.0).
 - [AnalogSense](https://github.com/AnalogSense/JavaScript-SDK) by Calamity, Inc.: analog protocols for Wooting, Razer, NuPhy, DrunkDeer, Keychron, Lemokey, MadLions and Redragon boards (MIT).
 - [ViGEmBus](https://github.com/nefarius/ViGEmBus) by Nefarius Software Solutions: the virtual controller driver.
 

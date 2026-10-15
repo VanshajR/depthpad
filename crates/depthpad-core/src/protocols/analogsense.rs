@@ -6,38 +6,13 @@
 //! the set of pressed keys (HID usage, depth 0..1). The driver in `platform::drivers::analog`
 //! does the I/O. Reports are given without their report ID, which is passed separately.
 
-use std::collections::BTreeMap;
 
 use super::analogsense_tables as t;
 
-/// A report to send: report ID and data (without the ID).
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Out {
-    pub report_id: u8,
-    pub data: Vec<u8>,
-}
-
-/// Pressed keys: HID usage -> depth 0..1.
-pub type Keys = BTreeMap<u16, f64>;
-
-pub trait AnalogProtocol: Send {
-    /// Reports to send right after the keyboard is opened.
-    fn start(&mut self) -> Vec<Out> {
-        Vec::new()
-    }
-    /// An input report arrived. Returns the complete set of pressed keys when the report
-    /// completes one, and what to send next.
-    fn input(&mut self, report_id: u8, data: &[u8]) -> (Option<Keys>, Vec<Out>);
-    /// Called about every 10 ms; for protocols that poll or keep the keyboard awake.
-    fn tick(&mut self, _now: f64) -> Vec<Out> {
-        Vec::new()
-    }
-}
+pub use super::analog::{AnalogProtocol, Keys, Out};
 
 fn out(report_id: u8, len: usize, head: &[u8]) -> Out {
-    let mut data = vec![0u8; len];
-    data[..head.len()].copy_from_slice(head);
-    Out { report_id, data }
+    Out::write(report_id, len, head)
 }
 
 fn be16(d: &[u8], i: usize) -> Option<u16> {
@@ -117,24 +92,54 @@ impl AnalogProtocol for Razer {
 
 // --------------------------------------------------------------------------------------- NuPhy
 
-/// NuPhy: one key change per report (0xA0, big-endian scancode at 2, value 0..200 at 7).
+/// NuPhy: one 8-byte A0 record per key change: type, unknown, scancode (BE), travel (BE), vendor
+/// field. As fixed in HallJoy's copy of AnalogSense: travel is out of 1600 on the Air75 / Air60 HE
+/// (19F5:6120, FEE0) and 800 on the others, and scancodes above 0xFF are modifiers or Fn.
 #[derive(Default)]
 pub struct Nuphy {
     keys: Keys,
+    full_scale: u16,
+}
+
+impl Nuphy {
+    pub fn new(product_id: u16) -> Self {
+        Self { keys: Keys::new(), full_scale: if matches!(product_id, 0x6120 | 0xFEE0) { 1600 } else { 800 } }
+    }
+}
+
+/// A NuPhy scancode's usage (modifiers and Fn have their own codes).
+fn nuphy_usage(code: u16) -> Option<u16> {
+    Some(match code {
+        1..=0xFF => code,
+        0x100 => 0xE0,
+        0x200 => 0xE1,
+        0x400 => 0xE2,
+        0x800 => 0xE3,
+        0x1000 => 0xE4,
+        0x2000 => 0xE5,
+        0x4000 => 0xE6,
+        0x8000 => 0xE7,
+        0xFF05 => 0x409,
+        _ => return None,
+    })
 }
 
 impl AnalogProtocol for Nuphy {
-    fn input(&mut self, _id: u8, d: &[u8]) -> (Option<Keys>, Vec<Out>) {
-        if d.first() != Some(&0xA0) {
+    fn input(&mut self, id: u8, d: &[u8]) -> (Option<Keys>, Vec<Out>) {
+        // the record starts with A0, whether that is the report ID or its first byte
+        let r: Vec<u8> = if id == 0xA0 { std::iter::once(0xA0).chain(d.iter().copied()).collect() } else { d.to_vec() };
+        if r.len() < 8 || r[0] != 0xA0 {
             return (None, Vec::new());
         }
-        let (Some(code), Some(&v)) = (be16(d, 2), d.get(7)) else { return (None, Vec::new()) };
-        let usage = t::lookup(t::NUPHY, code).or((code > 0 && code < 0x100).then_some(code));
-        let Some(usage) = usage else { return (None, Vec::new()) };
+        let (Some(code), Some(v)) = (be16(&r, 2), be16(&r, 4)) else { return (None, Vec::new()) };
+        if v > self.full_scale {
+            return (None, Vec::new());
+        }
+        let Some(usage) = nuphy_usage(code) else { return (None, Vec::new()) };
         if v == 0 {
             self.keys.remove(&usage);
         } else {
-            self.keys.insert(usage, (v as f64 / 200.0).min(1.0));
+            self.keys.insert(usage, v as f64 / self.full_scale as f64);
         }
         (Some(self.keys.clone()), Vec::new())
     }
@@ -143,14 +148,38 @@ impl AnalogProtocol for Nuphy {
 // ----------------------------------------------------------------------------------- DrunkDeer
 
 /// DrunkDeer: poll with report 4 (b6 03 01); the answer comes in three parts (n = 0, 1, 2) of 59
-/// key values each, 0..40.
+/// key values each, 0..40. Report 4 a0 02 asks which model it is (from HallJoy's
+/// `halljoy_drunkdeer_identity.h`: a three-byte signature per model).
 #[derive(Default)]
 pub struct DrunkDeer {
     keys: Keys,
     last_poll: f64,
+    product_id: u16,
+    model: Option<&'static str>,
+}
+
+/// The model a DrunkDeer identity reply names, if it fits the product ID it came from.
+pub fn drunkdeer_model(d: &[u8], product_id: u16) -> Option<&'static str> {
+    if d.len() < 7 || d[0] != 0xA0 || d[1] != 2 || d[2] != 0 {
+        return None;
+    }
+    let (name, pid) = match (d[4], d[5], d[6]) {
+        (11, 1, 1) | (11, 4, 1) => ("DrunkDeer A75 ANSI", 0x2383),
+        (11, 4, 3) => ("DrunkDeer A75 Pro", 0x2383),
+        (11, 4, 2) => ("DrunkDeer A75 ISO", 0x2383),
+        (11, 3, 1) => ("DrunkDeer G60 ANSI", 0x2384),
+        (11, 2, 1) | (15, 1, 1) => ("DrunkDeer G65 ANSI", 0x2382),
+        (11, 4, 5) => ("DrunkDeer G75 ANSI", 0x2386),
+        (11, 4, 7) => ("DrunkDeer G75 JIS", 0x2391),
+        _ => return None,
+    };
+    (pid == product_id).then_some(name)
 }
 
 impl DrunkDeer {
+    pub fn new(product_id: u16) -> Self {
+        Self { product_id, ..Default::default() }
+    }
     fn poll() -> Out {
         out(0x04, 63, &[0xB6, 0x03, 0x01])
     }
@@ -158,9 +187,18 @@ impl DrunkDeer {
 
 impl AnalogProtocol for DrunkDeer {
     fn start(&mut self) -> Vec<Out> {
-        vec![Self::poll()]
+        vec![out(0x04, 63, &[0xA0, 0x02]), Self::poll()]
+    }
+    fn identity(&self) -> Option<String> {
+        self.model.map(str::to_string)
     }
     fn input(&mut self, _id: u8, d: &[u8]) -> (Option<Keys>, Vec<Out>) {
+        if d.first() == Some(&0xA0) {
+            if let Some(m) = drunkdeer_model(d, self.product_id) {
+                self.model = Some(m);
+            }
+            return (None, Vec::new());
+        }
         let Some(&n) = d.get(3) else { return (None, Vec::new()) };
         if n == 0 {
             self.keys.clear();
@@ -337,7 +375,7 @@ impl Bytech {
         d[0] = 0x97;
         let sum: u32 = 9 + d[..62].iter().map(|&b| b as u32).sum::<u32>();
         d[62] = 255 - (sum % 256) as u8;
-        Out { report_id: 9, data: d }
+        Out::write(9, 63, &d)
     }
 }
 
@@ -378,13 +416,18 @@ pub fn for_driver(driver: &str, product_id: u16, usage_page: u16) -> Option<Box<
             if usage_page == 0xFF54 { Box::new(WootingV1) } else { Box::new(WootingV2) }
         }
         "razer" => Box::new(Razer { report_id: if matches!(product_id, 0x02A6 | 0x02A7 | 0x02B0) { 11 } else { 7 } }),
-        "nuphy" => Box::new(Nuphy::default()),
-        "drunkdeer" => Box::new(DrunkDeer::default()),
+        "nuphy" => Box::new(Nuphy::new(product_id)),
+        "drunkdeer" => Box::new(DrunkDeer::new(product_id)),
         "keychron" => Box::new(Keychron::new(match product_id {
             0x0B10..=0x0B12 => t::KEYCHRON_Q1_HE,
             0x0B30 => t::KEYCHRON_Q3_HE,
             0x0B50 => t::KEYCHRON_Q5_HE,
             0x0610 => t::LEMOKEY_P1_HE,
+            0x0611 => t::LEMOKEY_P1_HE_ISO,
+            0x0E40 => t::KEYCHRON_K4_HE,
+            0x0E60 => t::KEYCHRON_K6_HE,
+            0x0B20 => t::KEYCHRON_Q2_HE,
+            0x0B40 => t::KEYCHRON_Q4_HE,
             _ => t::KEYCHRON_K2_HE,
         })),
         "madlions" => Box::new(MadLions::new(matches!(product_id, 0x1053 | 0x1055 | 0x1056 | 0x105D))),
@@ -425,13 +468,32 @@ mod tests {
 
     #[test]
     fn nuphy_tracks_changes() {
-        let mut n = Nuphy::default();
-        let k = n.input(0, &[0xA0, 0, 0x00, 0x1A, 0, 0, 0, 100]).0.unwrap();
+        // Air75 HE: travel out of 1600, big-endian at bytes 4-5
+        let mut n = Nuphy::new(0x6120);
+        let k = n.input(0, &[0xA0, 0, 0x00, 0x1A, 0x03, 0x20, 0, 0]).0.unwrap();
         assert_eq!(k[&0x1A], 0.5);
-        let k = n.input(0, &[0xA0, 0, 0x02, 0x00, 0, 0, 0, 200]).0.unwrap(); // Left Shift
+        let k = n.input(0, &[0xA0, 0, 0x02, 0x00, 0x06, 0x40, 0, 0]).0.unwrap(); // Left Shift
         assert_eq!(k[&0xE1], 1.0);
         let k = n.input(0, &[0xA0, 0, 0x00, 0x1A, 0, 0, 0, 0]).0.unwrap();
         assert!(!k.contains_key(&0x1A));
+        // other NuPhy boards: out of 800; more than that is not a travel
+        let mut n = Nuphy::new(0x0001);
+        assert_eq!(n.input(0, &[0xA0, 0, 0xFF, 0x05, 0x01, 0x90, 0, 0]).0.unwrap()[&0x409], 0.5); // Fn
+        assert!(n.input(0, &[0xA0, 0, 0x00, 0x04, 0x03, 0x21, 0, 0]).0.is_none());
+        // A0 as the report ID
+        assert_eq!(n.input(0xA0, &[0, 0x00, 0x04, 0x03, 0x20, 0, 0]).0.unwrap()[&0x04], 1.0);
+    }
+
+    #[test]
+    fn drunkdeer_identity() {
+        let mut p = DrunkDeer::new(0x2383);
+        assert_eq!(p.start()[0].data[..2], [0xA0, 0x02]);
+        let mut r = vec![0u8; 63];
+        (r[0], r[1], r[4], r[5], r[6]) = (0xA0, 2, 11, 4, 3);
+        assert_eq!(p.input(4, &r), (None, Vec::new()));
+        assert_eq!(p.identity().as_deref(), Some("DrunkDeer A75 Pro"));
+        // a G65 signature on the A75's product ID doesn't count
+        assert_eq!(drunkdeer_model(&[0xA0, 2, 0, 0, 11, 2, 1], 0x2383), None);
     }
 
     #[test]

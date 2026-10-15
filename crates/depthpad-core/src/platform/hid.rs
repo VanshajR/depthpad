@@ -7,8 +7,8 @@ use std::io;
 
 use windows::core::PCWSTR;
 use windows::Win32::Devices::HumanInterfaceDevice::{
-    HidD_FreePreparsedData, HidD_GetAttributes, HidD_GetPreparsedData, HidD_SetNumInputBuffers,
-    HidD_SetOutputReport, HidP_GetCaps, HIDD_ATTRIBUTES, HIDP_CAPS, HIDP_STATUS_SUCCESS, PHIDP_PREPARSED_DATA,
+    HidD_FreePreparsedData, HidD_GetAttributes, HidD_GetFeature, HidD_GetPreparsedData, HidD_SetFeature,
+    HidD_SetNumInputBuffers, HidD_SetOutputReport, HidP_GetCaps, HIDD_ATTRIBUTES, HIDP_CAPS, HIDP_STATUS_SUCCESS, PHIDP_PREPARSED_DATA,
 };
 use windows::Win32::Foundation::{CloseHandle, ERROR_IO_PENDING, GENERIC_READ, GENERIC_WRITE, HANDLE, WAIT_OBJECT_0};
 use windows::Win32::Storage::FileSystem::{
@@ -26,6 +26,7 @@ pub struct Caps {
     pub usage: u16,
     pub input_len: u16,
     pub output_len: u16,
+    pub feature_len: u16,
 }
 
 pub struct HidCollection {
@@ -98,6 +99,7 @@ impl HidCollection {
                 usage: caps.Usage,
                 input_len: caps.InputReportByteLength,
                 output_len: caps.OutputReportByteLength,
+                feature_len: caps.FeatureReportByteLength,
             },
             input_buffers,
             read_buf: vec![0u8; caps.InputReportByteLength.max(1) as usize].into_boxed_slice(),
@@ -132,6 +134,35 @@ impl HidCollection {
             let n = n as usize;
             self.last_report_id = if n > 0 { self.read_buf[0] } else { 0 };
             Ok(Some(if n > 1 { &self.read_buf[1..n] } else { &[] }))
+        }
+    }
+
+    /// Send output reports over the control channel (HidD_SetOutputReport) from now on, for
+    /// keyboards whose firmware only takes them that way.
+    pub fn use_control_channel(&mut self) {
+        self.use_output_report = true;
+    }
+
+    /// Send a feature report (report ID first), padded to the collection's feature length.
+    pub fn set_feature(&mut self, report: &[u8]) -> io::Result<()> {
+        let mut buf = report.to_vec();
+        buf.resize((self.caps.feature_len as usize).max(report.len()), 0);
+        if unsafe { HidD_SetFeature(self.handle, buf.as_ptr() as *const c_void, buf.len() as u32) } {
+            Ok(())
+        } else {
+            Err(last_error("set feature"))
+        }
+    }
+
+    /// Read a feature report: returns its data without the report ID.
+    pub fn get_feature(&mut self, report_id: u8, len: usize) -> io::Result<Vec<u8>> {
+        let mut buf = vec![0u8; (self.caps.feature_len as usize).max(len + 1)];
+        buf[0] = report_id;
+        if unsafe { HidD_GetFeature(self.handle, buf.as_mut_ptr() as *mut c_void, buf.len() as u32) } {
+            buf.remove(0);
+            Ok(buf)
+        } else {
+            Err(last_error("get feature"))
         }
     }
 

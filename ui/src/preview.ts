@@ -5,10 +5,21 @@ import { mockIPC, mockWindows } from "@tauri-apps/api/mocks";
 import { mount } from "svelte";
 import ak680 from "../../crates/depthpad-core/data/devices/ajazz-ak680-v2-he.json";
 
-// ?device=<model id> previews another keyboard's drawing
+// ?device=<model id> previews another keyboard's drawing (a family variant too)
 const allDevices = import.meta.glob("../../crates/depthpad-core/data/devices/*.json", { eager: true, import: "default" }) as Record<string, typeof ak680>;
+const allVariants = import.meta.glob("../../crates/depthpad-core/data/variants/*.json", { eager: true, import: "default" }) as Record<string, { variants: Record<string, unknown>[] }>;
 const wanted = new URLSearchParams(location.search).get("device");
-const device = (Object.values(allDevices).find((d) => d.id === wanted) ?? ak680) as typeof ak680;
+function findDevice(id: string | null) {
+  const d = Object.values(allDevices).find((d) => d.id === id);
+  if (d) return d;
+  for (const [path, file] of Object.entries(allVariants)) {
+    const v = file.variants.find((v) => v.id === id);
+    const family = Object.values(allDevices).find((d) => path.endsWith(`/${d.id}.json`));
+    if (v && family) return { ...family, note: undefined, ...v } as unknown as typeof ak680;
+  }
+  return ak680;
+}
+const device = findDevice(wanted) as typeof ak680;
 import App from "./App.svelte";
 import "./lib/tokens.css";
 import { app } from "./lib/state.svelte";
@@ -41,9 +52,9 @@ function snapshot() {
 }
 
 // Same placement as device::place in the core (KLE conventions).
-type RowKey = [number, string, number] | { pos: number; legend?: string; w?: number; h?: number; x?: number; y?: number };
+type RowKey = [number, string, number] | { pos: number; legend?: string; w?: number; h?: number; x?: number; y?: number; notch?: [number, number] };
 function placed(rows: RowKey[][]) {
-  const out: { pos: number; legend: string; x: number; y: number; w: number; h: number }[] = [];
+  const out: { pos: number; legend: string; x: number; y: number; w: number; h: number; notch?: [number, number] }[] = [];
   let y = 0;
   for (const row of rows) {
     let x = 0;
@@ -51,7 +62,7 @@ function placed(rows: RowKey[][]) {
       const o = Array.isArray(k) ? { pos: k[0], legend: k[1], w: k[2] } : k;
       y += o.y ?? 0;
       x += o.x ?? 0;
-      out.push({ pos: o.pos, legend: o.legend ?? "", x, y, w: o.w ?? 1, h: o.h ?? 1 });
+      out.push({ pos: o.pos, legend: o.legend ?? "", x, y, w: o.w ?? 1, h: o.h ?? 1, notch: "notch" in o ? o.notch : undefined });
       x += o.w ?? 1;
     }
     y += 1;
